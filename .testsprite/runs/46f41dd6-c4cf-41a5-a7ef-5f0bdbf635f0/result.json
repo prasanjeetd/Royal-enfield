@@ -1,0 +1,24 @@
+{
+  "testId": "b2dff52a-bd94-4fd1-b7d6-4407dd4ea6b6",
+  "status": "failed",
+  "startedAt": "2026-10-10T16:01:49.301Z",
+  "finishedAt": "2026-10-10T16:15:14.604Z",
+  "videoUrl": "",
+  "failureAnalysisUrl": null,
+  "snapshotId": "snap_3a88f4fe65f4d421",
+  "runIdIfAvailable": "46f41dd6-c4cf-41a5-a7ef-5f0bdbf635f0",
+  "codeVersion": null,
+  "targetUrl": "http://localhost:5173",
+  "targetUrlSource": null,
+  "environment": {
+    "id": "16eb239a-1e6b-4cbb-947e-5004001b1213",
+    "name": "default"
+  },
+  "failedStepIndex": 5,
+  "failureKind": "unknown",
+  "verdict": "failed",
+  "executionStatus": "completed",
+  "summary": "Failed: The test timing out after 5 seconds usually indicates the page never became ready or the expected UI did not render. On the hosting side, likely causes include the service not starting correctly, binding only to localhost instead of the container/network interface, a crash during app initialization, or a missing dependency/asset/API preventing the frontend from loading. Underlying error: Waited for 5 seconds Target: environment default (http://localhost:5173).",
+  "apiOutput": null,
+  "trace": null
+}

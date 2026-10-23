@@ -1,0 +1,8 @@
+[
+  {
+    "kind": "snapshot",
+    "stepIndex": 4,
+    "summary": "Step 4 'Click 'Next motorcycle button'' passed (captured at 2026-10-10T13:32:26.235Z).",
+    "path": "steps/04-snapshot.html"
+  }
+]

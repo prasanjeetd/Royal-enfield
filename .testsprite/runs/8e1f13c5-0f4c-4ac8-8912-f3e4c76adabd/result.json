@@ -1,0 +1,24 @@
+{
+  "testId": "89108a7d-47ae-4bdb-a15d-ab552e9967ce",
+  "status": "failed",
+  "startedAt": "2026-10-10T13:21:50.289Z",
+  "finishedAt": "2026-10-10T13:34:34.074Z",
+  "videoUrl": "https://testsprite-videos.s3.us-east-1.amazonaws.com/20261010-133432-bada1048.webm?X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Content-Sha256=UNSIGNED-PAYLOAD&X-Amz-Credential=ASIAZQ3DRZAIOTHQSVIC%2F20261010%2Fus-east-1%2Fs3%2Faws4_request&X-Amz-Date=20261010T135442Z&X-Amz-Expires=604800&X-Amz-Security-Token=IQoJb3JpZ2luX2VjEIz%2F%2F%2F%2F%2F%2F%2F%2F%2F%2FwEaCXVzLWVhc3QtMSJHMEUCIArYjrWMe7COt4EZcXNBinSaL3ZtVrdu6SxoXGb04%2FWAAiEAgQA8PaIn%2FoR3huQnCzZfojPxaEB7XfpnFPXs1SoMnUcq%2BwMIVRAAGgw2NTQ2NTQ0MjUxMDQiDOfi3JDKK1C1jwK4wyrYA%2FMhLemYGfTv06FoZWDr0KUOIJsEoVnFnCIDxotqXGCOkJSOvbFEf77ii1F5ToU%2BQvs%2BctGSgUNGZ2GU0QhlpDetnBeOe7xhhVPbHTx14gnfNsBoWCvKEap2UBmBzdMytjv4uI0aMLntYWdLyLftG7Gw1IFAYl9%2F%2FtjIKULweDyrZU1HS93Cfq55shyewSRI3%2Fd1D1Cz%2FeoTerHlaaVX602jwq98KATHDqoCCVz1Pt6kWikNkfuWavf4ey35SukMPN4mWcemzp5OZYCT4kbY02X22BMXfnoGAPa10KWzCj5YFayir20031y5%2B4ubqd6gbkV%2BSS01qwXXa%2B7FTG5veHBWcYiUcgnJNcN5RbnBKHq%2BrqhAw%2B3LglE%2FNTa%2Bs1rxPcX5WSBxsDVg%2F%2FuR%2FPMZ3vP4iD%2FM8knixfIHCxkOOmDvVv9%2F2t0gT2FsUXw8aGBnn4u3XzLnkHq438mjH4K0BFoMYZwONTUGnXrik9CY2wtxAQJNdo87iiz3JeYIobslB%2B33sfzV2ZhWitysqFegLImTeNpwK6oRwFCVjLqofUG7PWupJGNIVG6kN2WGyO0m0ks9qGuuY1bYrruX%2Bfi6Sg%2BmR%2Fxiz13i306b%2BDM2UbS5EuyNc5H5M3Aw5sKo1gY6pQGGU3KXn9fToRNiPMXZFarK4BIri%2FEIcQUvk8HT2tnE%2BPFMiPAQm0QmtA9myz21nNFkW9ISvdSDeJl3BLzZC8W5aJrwr6gANrCfVc6OF8JVrLxqav1lt7%2Fg424YeuSpfxtSTkcHrwXgXuLOXiL0X95sTQWbw%2Bunz3TT80yOLVBraGeavKsb8AVK6ZKOuhg7s2kiSFy9fpv0eSmw%2FVv1DaCyTieKF0c%3D&X-Amz-Signature=536fb6e53a54b1435381dc008d4b53b45d7b4fc7f0de140e75d807e1bd4913c4&X-Amz-SignedHeaders=host&x-amz-checksum-mode=ENABLED&x-id=GetObject",
+  "failureAnalysisUrl": null,
+  "snapshotId": "snap_78c9cbff19da1dd7",
+  "runIdIfAvailable": "8e1f13c5-0f4c-4ac8-8912-f3e4c76adabd",
+  "codeVersion": null,
+  "targetUrl": "http://localhost:5173",
+  "targetUrlSource": null,
+  "environment": {
+    "id": "16eb239a-1e6b-4cbb-947e-5004001b1213",
+    "name": "default"
+  },
+  "failedStepIndex": 5,
+  "failureKind": "timeout",
+  "verdict": "failed",
+  "executionStatus": "completed",
+  "summary": "Failed (timeout): The most likely hosting-side issue is that the HUNTER 350 selector is rendered but not actually clickable in the deployed build due to an interaction-layer problem: an overlay, carousel drag behavior, or CSS pointer-event/z-index conflict is intercepting the click, or the click handler is not wired correctly for that specific pill. Another possibility is that the active-model state update is failing or timing out because the deployed frontend has a runtime error or stale clien… Target: environment default (http://localhost:5173).",
+  "apiOutput": null,
+  "trace": null
+}

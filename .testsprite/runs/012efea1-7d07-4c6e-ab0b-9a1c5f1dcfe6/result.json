@@ -1,0 +1,24 @@
+{
+  "testId": "50090068-54e7-4bef-9e58-eddef9c86a91",
+  "status": "failed",
+  "startedAt": "2026-10-22T09:38:16.620Z",
+  "finishedAt": "2026-10-22T09:50:59.947Z",
+  "videoUrl": "https://testsprite-videos.s3.us-east-1.amazonaws.com/20261022-095058-4eb09b1b.webm?X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Content-Sha256=UNSIGNED-PAYLOAD&X-Amz-Credential=ASIAZQ3DRZAINVAMLYLV%2F20261022%2Fus-east-1%2Fs3%2Faws4_request&X-Amz-Date=20261022T095220Z&X-Amz-Expires=604800&X-Amz-Security-Token=IQoJb3JpZ2luX2VjEKr%2F%2F%2F%2F%2F%2F%2F%2F%2F%2FwEaCXVzLWVhc3QtMSJIMEYCIQClDLMUs1ID49k8BIllZPWT1Eh5KHecgL0lGbcL37eP5wIhAKurazrIWRXGAVVRV5Xf34A66%2B5gNFiOcDr24Nm92AEHKvsDCHIQABoMNjU0NjU0NDI1MTA0IgwEUNiH%2BnYZeMGU4KMq2ANAm6swjd82eP4mHxTF2Iv0ztGaJtmBWcFjgcaRdusgs2BRnZ1n30fzu8D0wMgNdX2zNds4oZZNtcACjH31n1wzLZ4%2FQyNAbN7353tvs0pCvLvMzIedV8vyFRLiIVAbSJ0UVVki7XUuzLh8qu6YkgiSiDU%2BpbHWOlK8rjmRNH%2BVMhcY%2B7dD3zSpCtum3wl2rI2E6tUjvdktupzHvr%2Ba7u8hQ%2FnduOHxaQGVtmMI3g9F%2FpqAadLOSVO62r%2F25RWgRb7J38ab5U5CIWDhutqSReP1AcD5qR%2F6EmJ1B9B5POTxjA%2FHg0kXdhH6rFJuhJHnuCWMflxavvfDmEZLc9HKMgQ3s5bnlRwnpnQrr%2BERUVyCl%2BA1oaVuoKl5tD4IKmYebNwrFzRZStDoTmiVkvusjFHjXGKJuSx7Whdvsxer%2Brb%2FN4V9kgT7IEoi7Golsr531EaY33qoF4iB0QGNUwEv%2FFNDxVsBgvT78d2bzLgTpU7QJsIMJnH2BQS2ZYYH9%2F1i%2Fwc7MJiFG5VLYfTT6tK9JGNcRTaRGI7IZWUBvyW2VQuMnEKUPPYgvxur6Tyaf67nfCPyHmxyLyGTDDTN1UEoy6xbpTfMYachkBFUim1uMJ3DsZPaOX%2FNtu4DMIOq59YGOqQBCCoDSWpcmLCRiXrSCnL5D9FESlN0S6cy9GISrVMkpbiX3wdQSIgp0j8KSnP9OJTtYAsrjMeT%2FMMf0Y3NUIInBQbLxlaEGm4e47rA91juoyoZvbUGXe2DbKCoWziCcLtN91HSLWCkUIGHO%2FfmF5GWeIoRp5Qh80b4Z8pCW%2FRFn12ZDOusbEyuSu4CzH9%2FwkI18AIdf5Olpuw4EnJyNZzAjlQuAto%3D&X-Amz-Signature=a0b8c3f0baf96b9f9cc2c9f5c6799c3176ebe411945afb5ef0718e69f4326ae3&X-Amz-SignedHeaders=host&x-amz-checksum-mode=ENABLED&x-id=GetObject",
+  "failureAnalysisUrl": null,
+  "snapshotId": "snap_ec8ac79c5a6401f9",
+  "runIdIfAvailable": "012efea1-7d07-4c6e-ab0b-9a1c5f1dcfe6",
+  "codeVersion": null,
+  "targetUrl": "http://localhost:5173",
+  "targetUrlSource": null,
+  "environment": {
+    "id": "16eb239a-1e6b-4cbb-947e-5004001b1213",
+    "name": "default"
+  },
+  "failedStepIndex": 5,
+  "failureKind": "unknown",
+  "verdict": "failed",
+  "executionStatus": "completed",
+  "summary": "Failed: The most likely hosting-side cause is that the page did not finish loading or render the expected UI within the 3-second wait, usually because the service was slow to start, failed to bind/serve correctly on port 5173, or encountered a client-side runtime error that left the page blank/unresponsive. Another possible cause is that the host is serving an incomplete build or wrong entrypoint, so the test times out waiting for content that never appears. Underlying error: Waited for 3 secon… Target: environment default (http://localhost:5173).",
+  "apiOutput": null,
+  "trace": null
+}

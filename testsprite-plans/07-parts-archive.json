@@ -1,0 +1,42 @@
+{
+  "$schema": "https://raw.githubusercontent.com/TestSprite/testsprite-cli/v0.14.0/schemas/plan.schema.json",
+  "projectId": "9de8b4ba-b7bf-4e9f-8816-3d3d01f2c109",
+  "type": "frontend",
+  "name": "Parts Archive — renders motorcycle parts showcase cards, images, and detail dialog",
+  "description": "Verifies that the Parts Archive section displays engineering component cards with images, and clicking View Detail opens the modal dialog.",
+  "priority": "p1",
+  "planSteps": [
+    {
+      "type": "action",
+      "description": "Navigate to '/#parts-archive' and ensure the '#parts-archive' section is scrolled into view"
+    },
+    {
+      "type": "assertion",
+      "description": "The section label 'ENGINEERED IN EVERY DETAIL' and heading 'EVERY PART HAS A PURPOSE.' are visible"
+    },
+    {
+      "type": "assertion",
+      "description": "Component showcase cards exist for 'J-SERIES ENGINE', 'TUNED PEASHOOTER', 'SIGNATURE HEADLIGHT', 'SCULPTED TANK', and 'SCULPTED SADDLE'"
+    },
+    {
+      "type": "assertion",
+      "description": "Each component card displays a transparent part image, subtitle, and performance stat line"
+    },
+    {
+      "type": "action",
+      "description": "Click the 'VIEW DETAIL' button '#btn-detail-engine' for the J-Series Engine"
+    },
+    {
+      "type": "assertion",
+      "description": "A modal dialog appears displaying comprehensive engineering specifications and service details for 'J-SERIES ENGINE'"
+    },
+    {
+      "type": "action",
+      "description": "Click the modal close button '#btn-close-parts-modal' or press the Escape key"
+    },
+    {
+      "type": "assertion",
+      "description": "The modal closes and the Parts Archive showcase '#parts-archive' is visible again"
+    }
+  ]
+}

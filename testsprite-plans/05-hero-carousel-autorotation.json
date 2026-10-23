@@ -1,0 +1,26 @@
+{
+  "$schema": "https://raw.githubusercontent.com/TestSprite/testsprite-cli/v0.14.0/schemas/plan.schema.json",
+  "projectId": "9de8b4ba-b7bf-4e9f-8816-3d3d01f2c109",
+  "type": "frontend",
+  "name": "Hero Carousel — automatic rotation advances motorcycles periodically",
+  "description": "Verifies that the automated carousel cycle periodically rotates to the next motorcycle without user intervention.",
+  "priority": "p2",
+  "planSteps": [
+    {
+      "type": "action",
+      "description": "Navigate to / and observe the initially displayed motorcycle title and indicator position"
+    },
+    {
+      "type": "action",
+      "description": "Wait for 2 to 3 seconds without moving mouse or clicking any controls"
+    },
+    {
+      "type": "assertion",
+      "description": "The carousel automatically rotates and updates the active motorcycle name to the next model in sequence"
+    },
+    {
+      "type": "assertion",
+      "description": "The active indicator pill shifts to match the newly active motorcycle index"
+    }
+  ]
+}

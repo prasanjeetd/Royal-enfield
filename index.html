@@ -1,0 +1,148 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0" />
+
+    <!-- Ensure fresh page loads and refreshes always start at Hero top -->
+    <script>
+      if ('scrollRestoration' in history) {
+        history.scrollRestoration = 'manual';
+      }
+      window.scrollTo(0, 0);
+      if (window.location.hash && window.location.hash !== '#hero') {
+        history.replaceState(null, '', window.location.pathname + window.location.search);
+      }
+      window.addEventListener('beforeunload', function () {
+        window.scrollTo(0, 0);
+      });
+    </script>
+
+    <!-- Primary Page Metadata & SEO -->
+    <title>ROYAL ENFIELD — Pure Motorcycling Since 1901 | Official Experience</title>
+    <meta name="description" content="Explore the pure motorcycling legacy of Royal Enfield. Discover the Classic 350, Bullet 350, Hunter 350, Meteor 350, and Himalayan 450 with interactive 3D motorcycle anatomy and authorized test ride bookings." />
+    <meta name="keywords" content="Royal Enfield, Classic 350, Bullet 350, Hunter 350, Meteor 350, Himalayan 450, 3D motorcycle, pure motorcycling, book test ride" />
+    <meta name="author" content="Royal Enfield" />
+    <meta name="theme-color" content="#17283D" />
+    <link rel="canonical" href="https://www.royalenfield.com/" />
+
+    <!-- Open Graph / Facebook -->
+    <meta property="og:type" content="website" />
+    <meta property="og:url" content="https://www.royalenfield.com/" />
+    <meta property="og:title" content="ROYAL ENFIELD — Pure Motorcycling Since 1901" />
+    <meta property="og:description" content="Immersive 3D interactive assembly showcase and motorcycle collection. Pure motorcycling crafted with precision and century-old heritage." />
+    <meta property="og:image" content="https://www.royalenfield.com/bikes/classic-350.webp" />
+    <meta property="og:site_name" content="Royal Enfield" />
+    <meta property="og:locale" content="en_US" />
+
+    <!-- Twitter Cards -->
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:url" content="https://www.royalenfield.com/" />
+    <meta name="twitter:title" content="ROYAL ENFIELD — Pure Motorcycling" />
+    <meta name="twitter:description" content="Immersive 3D motorcycle experience. Explore the Classic 350, Himalayan 450, Bullet 350, and book official test rides." />
+    <meta name="twitter:image" content="https://www.royalenfield.com/bikes/classic-350.webp" />
+
+    <!-- Structured Data (JSON-LD Schema.org) -->
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@graph": [
+        {
+          "@type": "Organization",
+          "@id": "https://www.royalenfield.com/#organization",
+          "name": "Royal Enfield",
+          "url": "https://www.royalenfield.com/",
+          "logo": "https://www.royalenfield.com/logo.webp",
+          "sameAs": [
+            "https://www.instagram.com/royalenfield/",
+            "https://twitter.com/royalenfield",
+            "https://www.youtube.com/user/royalenfield"
+          ]
+        },
+        {
+          "@type": "WebSite",
+          "@id": "https://www.royalenfield.com/#website",
+          "url": "https://www.royalenfield.com/",
+          "name": "Royal Enfield Pure Motorcycling Experience",
+          "publisher": {
+            "@id": "https://www.royalenfield.com/#organization"
+          }
+        },
+        {
+          "@type": "Product",
+          "name": "Royal Enfield Classic 350",
+          "image": "https://www.royalenfield.com/bikes/classic-350.webp",
+          "description": "Timeless British roadster reborn with the smooth 349cc air-oil cooled J-series engine and Madras hand-painted coachlines.",
+          "brand": {
+            "@type": "Brand",
+            "name": "Royal Enfield"
+          },
+          "category": "Motorcycles"
+        }
+      ]
+    }
+    </script>
+
+    <!-- Critical Asset Preloading for Largest Contentful Paint (LCP) -->
+    <link rel="preload" as="image" href="/bikes/classic-350.webp" type="image/webp" fetchpriority="high" />
+    <link rel="preload" as="image" href="/logo.webp" type="image/webp" />
+
+    <!-- Critical Inline Styles for Immediate Frame-0 Paint -->
+    <style>
+      html, body {
+        margin: 0;
+        padding: 0;
+        background-color: #050A14;
+        color: #17283D;
+        overflow-x: hidden;
+        font-size: 14px;
+      }
+      #root {
+        min-height: 100vh;
+        background-color: #050A14;
+      }
+    </style>
+
+    <!-- Google Fonts: Non-blocking loading with display=swap -->
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link rel="preload" as="style" href="https://fonts.googleapis.com/css2?family=Anton&family=Bebas+Neue&family=Cinzel:wght@700;800;900&family=Inter:wght@300;400;500;600;700&family=Montserrat:wght@800;900&family=Oswald:wght@500;600;700&family=Rajdhani:wght@500;600;700&family=Teko:wght@700&display=swap" />
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Anton&family=Bebas+Neue&family=Cinzel:wght@700;800;900&family=Inter:wght@300;400;500;600;700&family=Montserrat:wght@800;900&family=Oswald:wght@500;600;700&family=Rajdhani:wght@500;600;700&family=Teko:wght@700&display=swap" media="print" onload="this.media='all'" />
+    <noscript>
+      <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Anton&family=Bebas+Neue&family=Cinzel:wght@700;800;900&family=Inter:wght@300;400;500;600;700&family=Montserrat:wght@800;900&family=Oswald:wght@500;600;700&family=Rajdhani:wght@500;600;700&family=Teko:wght@700&display=swap" />
+    </noscript>
+
+    <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><rect width='32' height='32' rx='6' fill='%2317283d'/><circle cx='16' cy='16' r='6' fill='%23c58a28'/></svg>" />
+  </head>
+  <body>
+    <div id="root">
+      <!-- Instant Frame-0 Static Preloader: Ensures zero blank screen while initial bundles evaluate -->
+      <div
+        id="frame0-preloader"
+        style="position:fixed;inset:0;z-index:99999;display:flex;flex-direction:column;align-items:center;justify-content:center;background-color:#050A14;background-image:radial-gradient(ellipse 80% 50% at 50% 40%, rgba(45, 78, 128, 0.22) 0%, rgba(15, 39, 71, 0.12) 50%, rgba(5, 10, 20, 0.98) 100%);user-select:none;overflow:hidden;"
+      >
+        <!-- Golden ambient glow -->
+        <div style="position:absolute;left:50%;top:50%;transform:translate(-50%, -50%);width:min(640px, 85vw);height:min(320px, 45vh);background:radial-gradient(ellipse at center, rgba(197, 138, 40, 0.14) 0%, rgba(158, 114, 44, 0.04) 40%, transparent 70%);filter:blur(28px);pointer-events:none;"></div>
+        <div style="position:relative;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:0 24px;text-align:center;z-index:10;">
+          <img
+            src="/logo.webp"
+            alt="Royal Enfield"
+            style="height:44px;width:auto;object-fit:contain;filter:drop-shadow(0 4px 20px rgba(0,0,0,0.7));"
+          />
+          <div style="display:flex;align-items:center;justify-content:center;gap:14px;margin-top:22px;">
+            <span style="width:40px;height:1px;background:linear-gradient(to right, transparent, rgba(158,114,44,0.8));"></span>
+            <span style="font-family:'Rajdhani',sans-serif;font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:0.38em;color:#C58A28;line-height:1;white-space:nowrap;">PURE MOTORCYCLING</span>
+            <span style="width:40px;height:1px;background:linear-gradient(to left, transparent, rgba(158,114,44,0.8));"></span>
+          </div>
+          <div style="margin-top:36px;display:flex;flex-direction:column;align-items:center;">
+            <div style="width:240px;height:2px;background:rgba(255,255,255,0.08);border-radius:9999px;overflow:hidden;position:relative;box-shadow:inset 0 1px 2px rgba(0,0,0,0.4);">
+              <div style="width:4%;height:100%;border-radius:9999px;background:linear-gradient(90deg, #9E722C 0%, #D4A862 50%, #FCCA02 100%);box-shadow:0 0 10px rgba(252,202,2,0.45);"></div>
+            </div>
+            <div style="margin-top:12px;font-family:'Rajdhani',sans-serif;font-size:11px;font-weight:700;letter-spacing:0.25em;color:#A0AEC0;">0%</div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <script type="module" src="/src/main.jsx"></script>
+  </body>
+</html>

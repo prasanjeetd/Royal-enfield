@@ -1,0 +1,34 @@
+{
+  "$schema": "https://raw.githubusercontent.com/TestSprite/testsprite-cli/v0.14.0/schemas/plan.schema.json",
+  "projectId": "9de8b4ba-b7bf-4e9f-8816-3d3d01f2c109",
+  "type": "frontend",
+  "name": "Hero Carousel — displays valid motorcycle model names and active indicator",
+  "description": "Verifies that the Hero turntable carousel accurately renders the active motorcycle model name and provides selector tabs for all models.",
+  "priority": "p1",
+  "planSteps": [
+    {
+      "type": "action",
+      "description": "Navigate to / and inspect the Hero section"
+    },
+    {
+      "type": "assertion",
+      "description": "The active motorcycle headline element displays an authentic model name such as 'CLASSIC 350', 'BULLET 350', 'HUNTER 350', 'METEOR 350', 'HIMALAYAN 450', or 'CLASSIC 350 SIGNALS'"
+    },
+    {
+      "type": "assertion",
+      "description": "The bottom carousel pill dock displays navigation buttons for all Royal Enfield motorcycles"
+    },
+    {
+      "type": "assertion",
+      "description": "The active model button contains a highlighted gold indicator pill and active gradient styling"
+    },
+    {
+      "type": "action",
+      "description": "Click the model navigation button for 'HUNTER 350'"
+    },
+    {
+      "type": "assertion",
+      "description": "The active motorcycle headline updates to display 'HUNTER 350'"
+    }
+  ]
+}

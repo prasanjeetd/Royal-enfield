@@ -1,0 +1,8 @@
+[
+  {
+    "kind": "snapshot",
+    "stepIndex": 5,
+    "summary": "Step 5 'The hero headline displays an authentic model name 'CLASSIC 350'.' failed. Error: TEST FAILURE\n\nClicking the 'HUNTER 350' selector did not work — the interactive step to change the active model could not be completed.\n\nObservations:\n- The hero headline displays 'CLASSIC 350' (an authentic model name) and is visible on the page.\n- The bottom carousel pill dock lists all model buttons: CLASSIC 350, BULLET 350, HUNTER 350, METEOR 350, HIMALAYAN 450, CLASSIC 350 SIGNALS.\n- Attempts to activate 'HUNTER 350' via the model selector timed out or produced no headline change (click event handlers timed out multiple times), so it was not possible to verify that clicking 'HUNTER 350' updates the hero headline to 'HUNTER 350'.",
+    "path": "steps/05-snapshot.html"
+  }
+]

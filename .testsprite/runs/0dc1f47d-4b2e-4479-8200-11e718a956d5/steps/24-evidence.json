@@ -1,0 +1,8 @@
+[
+  {
+    "kind": "snapshot",
+    "stepIndex": 24,
+    "summary": "Step 24 'The booking form displays the inline message “Please enter your full name.” when submitted without a name.' failed. Error: TEST BLOCKED\n\nThe main page flows were verified, including the Parts Archive details, Himalayan 450 selection, test ride confirmation, Contact form validation, and the “MESSAGE RECEIVED” confirmation. Full frontend verification could not be completed because the engine hotspot interaction timed out, and automatic rotation, cross-viewport overflow, and browser-console status could not be conclusively checked.\n\nObservations:\n- The Contact form displayed “MESSAGE RECEIVED” after submission; empty submission triggered browser validation.\n- The motorcycle model and J-Series engine specifications were visible, but hotspot activation timed out.\n- Homepage carousel changes and matching active indicators were observed; automatic rotation, overflow, and console status remain unverified.",
+    "path": "steps/24-snapshot.html"
+  }
+]

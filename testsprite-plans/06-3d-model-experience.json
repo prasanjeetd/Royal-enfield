@@ -1,0 +1,54 @@
+{
+  "$schema": "https://raw.githubusercontent.com/TestSprite/testsprite-cli/v0.14.0/schemas/plan.schema.json",
+  "projectId": "9de8b4ba-b7bf-4e9f-8816-3d3d01f2c109",
+  "type": "frontend",
+  "name": "3D Experience — GLTF motorcycle model and interactive component hotspots load",
+  "description": "Verifies that the Three.js 3D motorcycle canvas renders without error, the loading indicator clears, and hotspot selection buttons display component specs.",
+  "priority": "p0",
+  "planSteps": [
+    {
+      "type": "action",
+      "description": "Navigate to '/#bike-3d' and ensure the '#bike-3d' section is scrolled into view"
+    },
+    {
+      "type": "assertion",
+      "description": "The '#bike-3d' section is visible with header 'CLASSIC 350 / 3D EXPERIENCE' and heading 'THE MACHINE, UP CLOSE.'"
+    },
+    {
+      "type": "assertion",
+      "description": "The WebGL canvas inside '#bike-3d' is rendered without loading error and the control toolbar including '#btn-full-view' is visible"
+    },
+    {
+      "type": "assertion",
+      "description": "The five hotspot navigation buttons '#hotspot-btn-engine', '#hotspot-btn-exhaust', '#hotspot-btn-headlight', '#hotspot-btn-tank', and '#hotspot-btn-seat' are visible and present below the 3D canvas"
+    },
+    {
+      "type": "assertion",
+      "description": "The component details panel is visible displaying default engine specifications 'J-SERIES 349 CC' and 'AIR-OIL COOLED SOHC'"
+    },
+    {
+      "type": "action",
+      "description": "Click the hotspot button '#hotspot-btn-exhaust'"
+    },
+    {
+      "type": "assertion",
+      "description": "The component details panel updates to display exhaust specifications 'PEASHOOTER SILENCER' and 'TUNED BASS CADENCE'"
+    },
+    {
+      "type": "action",
+      "description": "Click the hotspot button '#hotspot-btn-engine'"
+    },
+    {
+      "type": "assertion",
+      "description": "The component details panel updates back to display engine specifications 'J-SERIES 349 CC' and 'AIR-OIL COOLED SOHC'"
+    },
+    {
+      "type": "action",
+      "description": "Click the '#btn-full-view' button"
+    },
+    {
+      "type": "assertion",
+      "description": "The '#btn-full-view' button indicates active state and the component details panel closes as the camera resets to full overview"
+    }
+  ]
+}

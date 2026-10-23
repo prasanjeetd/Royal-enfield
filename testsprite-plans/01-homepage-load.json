@@ -1,0 +1,30 @@
+{
+  "$schema": "https://raw.githubusercontent.com/TestSprite/testsprite-cli/v0.14.0/schemas/plan.schema.json",
+  "projectId": "9de8b4ba-b7bf-4e9f-8816-3d3d01f2c109",
+  "type": "frontend",
+  "name": "Homepage — initial load renders successfully without errors",
+  "description": "Verifies that the Royal Enfield website loads at root, renders the main hero header, brand logo, and primary title.",
+  "priority": "p0",
+  "planSteps": [
+    {
+      "type": "action",
+      "description": "Navigate to / and wait for the page to finish loading"
+    },
+    {
+      "type": "assertion",
+      "description": "The page title contains 'Royal Enfield'"
+    },
+    {
+      "type": "assertion",
+      "description": "The main hero heading 'ROYAL ENFIELD' is visible in the viewport"
+    },
+    {
+      "type": "assertion",
+      "description": "The brand logo image and navigation bar are present"
+    },
+    {
+      "type": "assertion",
+      "description": "No critical uncaught JavaScript error banners or error boundaries are displayed"
+    }
+  ]
+}

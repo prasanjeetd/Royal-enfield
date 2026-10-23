@@ -1,0 +1,50 @@
+{
+  "$schema": "https://raw.githubusercontent.com/TestSprite/testsprite-cli/v0.14.0/schemas/plan.schema.json",
+  "projectId": "9de8b4ba-b7bf-4e9f-8816-3d3d01f2c109",
+  "type": "frontend",
+  "name": "Navigation — navbar links scroll to the respective section anchors",
+  "description": "Verifies that clicking navigation items (Overview, 3D Experience, Parts Archive, Collection, Contact) scrolls to and displays the target sections on the page.",
+  "priority": "p1",
+  "planSteps": [
+    {
+      "type": "action",
+      "description": "Navigate to / and scroll slightly down to make the fixed navigation bar visible"
+    },
+    {
+      "type": "assertion",
+      "description": "The fixed navigation bar appears with links for 'OVERVIEW', '3D EXPERIENCE', 'PARTS ARCHIVE', 'COLLECTION', and 'CONTACT'"
+    },
+    {
+      "type": "action",
+      "description": "Click the '3D EXPERIENCE' navigation link"
+    },
+    {
+      "type": "assertion",
+      "description": "The page smoothly scrolls down and the 3D motorcycle section '#bike-3d' is visible in the viewport"
+    },
+    {
+      "type": "action",
+      "description": "Click the 'PARTS ARCHIVE' navigation link"
+    },
+    {
+      "type": "assertion",
+      "description": "The page scrolls to the Parts Archive section '#parts-archive'"
+    },
+    {
+      "type": "action",
+      "description": "Click the 'COLLECTION' navigation link"
+    },
+    {
+      "type": "assertion",
+      "description": "The page scrolls to the Collection section '#choose-your-ride' with heading 'CHOOSE YOUR RIDE'"
+    },
+    {
+      "type": "action",
+      "description": "Click the 'CONTACT' navigation link"
+    },
+    {
+      "type": "assertion",
+      "description": "The page scrolls to the Contact section '#contact' with authorized branches and direct inquiry form"
+    }
+  ]
+}

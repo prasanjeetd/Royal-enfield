@@ -1,0 +1,8 @@
+[
+  {
+    "kind": "snapshot",
+    "stepIndex": 6,
+    "summary": "Step 6 'The hotspot navigation buttons ENGINE, EXHAUST, HEADLIGHT, TANK, and SEAT are present below the 3D canvas.' failed. Error: Waited for 5 seconds",
+    "path": "steps/06-snapshot.html"
+  }
+]

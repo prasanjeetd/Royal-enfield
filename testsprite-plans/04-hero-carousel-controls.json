@@ -1,0 +1,34 @@
+{
+  "$schema": "https://raw.githubusercontent.com/TestSprite/testsprite-cli/v0.14.0/schemas/plan.schema.json",
+  "projectId": "9de8b4ba-b7bf-4e9f-8816-3d3d01f2c109",
+  "type": "frontend",
+  "name": "Hero Carousel — next and previous arrow controls cycle motorcycles correctly",
+  "description": "Verifies that pressing the next and previous arrow buttons rotates the turntable showcase and updates the active motorcycle name and badge.",
+  "priority": "p1",
+  "planSteps": [
+    {
+      "type": "action",
+      "description": "Navigate to / and note the currently displayed motorcycle name in the hero title"
+    },
+    {
+      "type": "action",
+      "description": "Click the next arrow button (aria-label 'Next motorcycle') in the bottom carousel dock to advance to the subsequent motorcycle"
+    },
+    {
+      "type": "assertion",
+      "description": "The active motorcycle headline updates to display the subsequent motorcycle in the collection"
+    },
+    {
+      "type": "assertion",
+      "description": "The top-center model badge updates to reflect the new active motorcycle name matching the headline"
+    },
+    {
+      "type": "action",
+      "description": "Click the previous arrow button (aria-label 'Previous motorcycle') in the bottom carousel dock"
+    },
+    {
+      "type": "assertion",
+      "description": "The carousel rotates back and restores the previous motorcycle model name in both the headline and top-center badge"
+    }
+  ]
+}

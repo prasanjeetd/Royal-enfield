@@ -1,0 +1,8 @@
+[
+  {
+    "kind": "snapshot",
+    "stepIndex": 3,
+    "summary": "Step 3 'Click '02 EXHAUST button'' failed. Error: Waited for 3 seconds",
+    "path": "steps/03-snapshot.html"
+  }
+]

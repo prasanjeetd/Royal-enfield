@@ -1,0 +1,50 @@
+{
+  "$schema": "https://raw.githubusercontent.com/TestSprite/testsprite-cli/v0.14.0/schemas/plan.schema.json",
+  "projectId": "9de8b4ba-b7bf-4e9f-8816-3d3d01f2c109",
+  "type": "frontend",
+  "name": "Contact Form — validates required fields and displays confirmation upon inquiry submission",
+  "description": "Verifies that the Direct Inquiry form in the Contact section enforces required fields and transitions to the confirmation state when submitted with valid data.",
+  "priority": "p1",
+  "planSteps": [
+    {
+      "type": "action",
+      "description": "Navigate to / and scroll down into the '#contact' section"
+    },
+    {
+      "type": "assertion",
+      "description": "The Contact section is displayed with heading 'START YOUR JOURNEY.' and the 'DIRECT INQUIRY' card"
+    },
+    {
+      "type": "assertion",
+      "description": "The input fields for '#name', '#email', and '#message' and the 'SEND MESSAGE' button are visible"
+    },
+    {
+      "type": "action",
+      "description": "Attempt to click 'SEND MESSAGE' while leaving all fields empty"
+    },
+    {
+      "type": "assertion",
+      "description": "HTML5 form validation prevents submission and requests completion of the required fields"
+    },
+    {
+      "type": "action",
+      "description": "Fill '#name' with 'Test Rider', '#email' with 'rider@enfield-test.com', and '#message' with 'Inquiring about test ride availability in Mumbai.'"
+    },
+    {
+      "type": "action",
+      "description": "Click the 'SEND MESSAGE' button"
+    },
+    {
+      "type": "assertion",
+      "description": "The form transitions to the success screen displaying 'MESSAGE RECEIVED' and a confirmation message"
+    },
+    {
+      "type": "action",
+      "description": "Click 'Send another message'"
+    },
+    {
+      "type": "assertion",
+      "description": "The contact form resets to empty input fields ready for a new inquiry"
+    }
+  ]
+}
