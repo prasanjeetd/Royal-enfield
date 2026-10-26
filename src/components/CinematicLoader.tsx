@@ -25,7 +25,7 @@ const CRITICAL_HERO_ASSETS = [
 export default function CinematicLoader({ onLoaded }: CinematicLoaderProps) {
   const [isRendered, setIsRendered] = useState<boolean>(true);
   const [isFadingOut, setIsFadingOut] = useState<boolean>(false);
-  const [percent, setPercent] = useState<number>(0);
+  const [percent, setPercent] = useState<number>(14);
 
   const progressBarRef = useRef<HTMLDivElement>(null);
   const progressTextRef = useRef<HTMLSpanElement>(null);
@@ -33,16 +33,15 @@ export default function CinematicLoader({ onLoaded }: CinematicLoaderProps) {
   useEffect(() => {
     let isMounted = true;
     const startTime = performance.now();
-    const minDisplayDuration = 1100; // Guarantee 1.1s so user experiences the premium branding
-    const maxSafetyDuration = 2200; // Never block the user longer than 2.2s
 
     let realAssetsReady = false;
     let completed = false;
     let rafId: number | null = null;
+    let heartbeatId: any = null;
 
     // Direct DOM updater for fluid 60fps animation
     const updateProgress = (val: number) => {
-      const clamped = Math.min(100, Math.max(0, val));
+      const clamped = Math.min(100, Math.max(14, val));
       const rounded = Math.round(clamped);
 
       if (progressBarRef.current) {
@@ -53,8 +52,12 @@ export default function CinematicLoader({ onLoaded }: CinematicLoaderProps) {
       }
     };
 
+    // Initialize DOM display immediately on mount
+    updateProgress(14);
+
     // Preload critical assets in parallel using Image & font readiness
     let loadedCount = 0;
+    let cachedCount = 0;
     const totalAssets = CRITICAL_HERO_ASSETS.length;
 
     const checkAllDone = () => {
@@ -71,6 +74,7 @@ export default function CinematicLoader({ onLoaded }: CinematicLoaderProps) {
       img.onerror = checkAllDone;
       img.src = url;
       if (img.complete) {
+        cachedCount++;
         checkAllDone();
       }
     });
@@ -79,29 +83,37 @@ export default function CinematicLoader({ onLoaded }: CinematicLoaderProps) {
       document.fonts.ready.then(() => {}).catch(() => {});
     }
 
+    // Adapt display duration: warm cache exits swiftly (350ms); fresh loads take 750ms max
+    const isWarm = cachedCount >= totalAssets;
+    const minDisplayDuration = isWarm ? 350 : 750;
+    const maxSafetyDuration = 1800; // Never block the user longer than 1.8s
+
     // Safety timeout: If network is slow or offline, mark assets as ready
     const safetyTimer = setTimeout(() => {
       realAssetsReady = true;
     }, maxSafetyDuration);
 
-    // Frame animation loop
-    const animate = (currentTime: number) => {
-      if (!isMounted) return;
+    // Core progress tick computation
+    const tick = (currentTime: number) => {
+      if (!isMounted || completed) return;
 
       const elapsed = currentTime - startTime;
 
-      let target = 0;
+      // Real asset weight: ratio of loaded critical assets
+      const assetProgressFactor = Math.min(1, loadedCount / totalAssets);
+
+      let target = 14;
 
       if (!realAssetsReady || elapsed < minDisplayDuration) {
-        // Natural ease-out curve climbing towards ~88% while assets load
-        const progressFactor = Math.min(1, elapsed / minDisplayDuration);
-        // Quad-out curve: fast start (immediately moves from 0%), steady climb
-        const eased = 1 - Math.pow(1 - progressFactor, 2.2);
-        target = eased * 88;
+        const timeFactor = Math.min(1, elapsed / minDisplayDuration);
+        // Combined blend of real assets ready + smooth ease-out curve
+        const progressFactor = Math.max(timeFactor, assetProgressFactor);
+        const eased = 1 - Math.pow(1 - progressFactor, 2.0);
+        target = 14 + eased * (88 - 14);
       } else {
-        // Assets are ready and min duration has passed: glide swiftly from 88% to 100%
+        // Assets are ready: glide swiftly from current value to 100%
         const finishElapsed = elapsed - minDisplayDuration;
-        const finishFactor = Math.min(1, finishElapsed / 350);
+        const finishFactor = Math.min(1, finishElapsed / 220);
         target = 88 + finishFactor * 12;
       }
 
@@ -113,6 +125,7 @@ export default function CinematicLoader({ onLoaded }: CinematicLoaderProps) {
 
         if (!completed) {
           completed = true;
+          if (heartbeatId) clearInterval(heartbeatId);
 
           // Brief pause at 100% for visual satisfaction, then cinematic fade
           setTimeout(() => {
@@ -125,24 +138,32 @@ export default function CinematicLoader({ onLoaded }: CinematicLoaderProps) {
               if (isMounted) {
                 setIsRendered(false);
               }
-            }, 600);
-          }, 200);
+            }, 450);
+          }, 120);
 
           return;
         }
       }
 
-      rafId = requestAnimationFrame(animate);
+      if (!completed) {
+        rafId = requestAnimationFrame(tick);
+      }
     };
 
-    rafId = requestAnimationFrame(animate);
+    rafId = requestAnimationFrame(tick);
+
+    // Heartbeat fallback: keeps progress alive even if rAF is throttled in background tab
+    heartbeatId = setInterval(() => {
+      if (!completed && isMounted) {
+        tick(performance.now());
+      }
+    }, 60);
 
     return () => {
       isMounted = false;
       clearTimeout(safetyTimer);
-      if (rafId) {
-        cancelAnimationFrame(rafId);
-      }
+      if (heartbeatId) clearInterval(heartbeatId);
+      if (rafId) cancelAnimationFrame(rafId);
     };
   }, [onLoaded]);
 

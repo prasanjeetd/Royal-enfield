@@ -136,9 +136,22 @@
           </div>
           <div style="margin-top:36px;display:flex;flex-direction:column;align-items:center;">
             <div style="width:240px;height:2px;background:rgba(255,255,255,0.08);border-radius:9999px;overflow:hidden;position:relative;box-shadow:inset 0 1px 2px rgba(0,0,0,0.4);">
-              <div style="width:4%;height:100%;border-radius:9999px;background:linear-gradient(90deg, #9E722C 0%, #D4A862 50%, #FCCA02 100%);box-shadow:0 0 10px rgba(252,202,2,0.45);"></div>
+              <div id="frame0-bar" style="width:14%;height:100%;border-radius:9999px;background:linear-gradient(90deg, #9E722C 0%, #D4A862 50%, #FCCA02 100%);box-shadow:0 0 10px rgba(252,202,2,0.45);transition:width 0.25s ease;"></div>
             </div>
-            <div style="margin-top:12px;font-family:'Rajdhani',sans-serif;font-size:11px;font-weight:700;letter-spacing:0.25em;color:#A0AEC0;">0%</div>
+            <div id="frame0-txt" style="margin-top:12px;font-family:'Rajdhani',sans-serif;font-size:11px;font-weight:700;letter-spacing:0.25em;color:#A0AEC0;">14%</div>
+            <script>
+              (function(){
+                var b = document.getElementById('frame0-bar');
+                var t = document.getElementById('frame0-txt');
+                var p = 14;
+                var iv = setInterval(function(){
+                  if (!b || !t || !document.getElementById('frame0-preloader')) { clearInterval(iv); return; }
+                  p = Math.min(84, p + Math.floor(Math.random() * 6 + 4));
+                  b.style.width = p + '%';
+                  t.textContent = p + '%';
+                }, 90);
+              })();
+            </script>
           </div>
         </div>
       </div>

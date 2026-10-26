@@ -1,9 +1,11 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import * as THREE from 'three';
 import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader.js';
+import { DRACOLoader } from 'three/examples/jsm/loaders/DRACOLoader.js';
+import { MeshoptDecoder } from 'three/examples/jsm/libs/meshopt_decoder.module.js';
 import gsap from 'gsap';
 import { ScrollTrigger } from 'gsap/ScrollTrigger';
-import { Maximize2, Minimize2, RotateCcw, Plus, Minus, Compass, AlertCircle, RefreshCw, Eye } from 'lucide-react';
+import { Maximize2, Minimize2, RotateCcw, Plus, Minus, Compass, AlertCircle, RefreshCw, Eye, Info } from 'lucide-react';
 
 gsap.registerPlugin(ScrollTrigger);
 
@@ -115,8 +117,87 @@ const BIKE_HOTSPOTS: BikeHotspot[] = [
 ];
 
 
-// Shared module-level GLTF model promise cache — prevents downloading 25.5MB multiple times
+// High-fidelity static poster fallback assets for low-end GPUs or unavailable WebGL
+const HOTSPOT_FALLBACK_IMAGES: Record<string, string> = {
+  engine: '/engine.webp',
+  exhaust: '/exhaust.webp',
+  headlight: '/headlight.webp',
+  tank: '/tank.webp',
+  seat: '/seat.webp',
+};
+const FULL_BIKE_FALLBACK_IMAGE = '/bikes/classic-350.webp';
+
+/**
+ * Safely verify WebGL rendering capability before initializing Three.js.
+ * Tests WebGL 2.0 and WebGL 1.0 context creation with try-catch.
+ */
+function isWebGLAvailable(): boolean {
+  if (typeof window === 'undefined') return false;
+  try {
+    const canvas = document.createElement('canvas');
+    return Boolean(
+      window.WebGLRenderingContext &&
+      (canvas.getContext('webgl2') || canvas.getContext('webgl') || canvas.getContext('experimental-webgl'))
+    );
+  } catch {
+    return false;
+  }
+}
+
+// Shared module-level GLTF model promise cache — prevents downloading multiple times
 let cachedGltfPromise: Promise<any> | null = null;
+
+/**
+ * Mobile Quality Tiering — Responsive Device Pixel Ratio Calculator
+ * Viewports < 768px capped to 1.0; Desktop viewports capped at Math.min(devicePixelRatio, 1.5).
+ */
+function getTargetPixelRatio(): number {
+  if (typeof window === 'undefined') return 1;
+  const isMobile = window.innerWidth < 768;
+  const dpr = window.devicePixelRatio || 1;
+  return isMobile ? Math.min(dpr, 1.0) : Math.min(dpr, 1.5);
+}
+
+/**
+ * Selective Shadow Casting Filter
+ * Eliminates redundant shadow map vertex passes on ~1,000+ microscopic fasteners, stitches,
+ * screws, washers, and pins while preserving key shadows from tank, frame, wheels, mudguards,
+ * exhaust, engine block, and saddle.
+ */
+function shouldMeshCastShadow(name: string | undefined): boolean {
+  if (!name) return false;
+  const n = name.toLowerCase();
+
+  // Exclude microscopic, fastener, interior, and non-casting decorative sub-meshes
+  if (
+    n.includes('stitch') ||
+    n.includes('screw') ||
+    n.includes('washer') ||
+    n.includes('bolt') ||
+    n.includes('nut') ||
+    n.includes('pin') ||
+    n.includes('tick') ||
+    n.includes('fastener') ||
+    n.includes('nipple') ||
+    n.includes('lettering') ||
+    n.includes('cable') ||
+    n.includes('hose') ||
+    n.includes('filament') ||
+    n.includes('bulb') ||
+    n.includes('lens') ||
+    n.includes('glass') ||
+    n.includes('reflector') ||
+    n.includes('sprocket tooth') ||
+    n.includes('groove') ||
+    n.includes('fluting') ||
+    n.includes('bobbin') ||
+    n.includes('seal')
+  ) {
+    return false;
+  }
+  return true;
+}
+
 
 /**
  * Bike3DExperience — Clean, Rebuilt Interactive 3D Experience
@@ -127,6 +208,8 @@ export default function Bike3DExperience() {
   const [isLoading, setIsLoading] = useState<boolean>(true);
   const [loadProgress, setLoadProgress] = useState<number>(0);
   const [loadError, setLoadError] = useState<string | null>(null);
+  const [fallbackMode, setFallbackMode] = useState<boolean>(false);
+  const [fallbackReason, setFallbackReason] = useState<string>('');
 
   // Defer heavy Three.js canvas & 25.5MB GLTF loading until section approaches or user interacts
   const [shouldInit3D, setShouldInit3D] = useState<boolean>(() => {
@@ -198,7 +281,9 @@ export default function Bike3DExperience() {
     scene: THREE.Scene | null;
     camera: THREE.PerspectiveCamera | null;
     modelGroup: THREE.Group | null;
+    keyLight: THREE.DirectionalLight | null;
     animFrameId: number | null;
+    wakeUpLoop: () => void;
     defaultCamPos: THREE.Vector3;
     defaultTarget: THREE.Vector3;
     currentCamPos: THREE.Vector3;
@@ -216,7 +301,9 @@ export default function Bike3DExperience() {
     scene: null,
     camera: null,
     modelGroup: null,
+    keyLight: null,
     animFrameId: null,
+    wakeUpLoop: () => {},
     defaultCamPos: new THREE.Vector3(2.25, 1.12, 2.25),
     defaultTarget: new THREE.Vector3(0, 0.74, 0),
     currentCamPos: new THREE.Vector3(2.25, 1.12, 2.25),
@@ -254,14 +341,37 @@ export default function Bike3DExperience() {
     camera.position.copy(threeRef.current.defaultCamPos);
     camera.lookAt(threeRef.current.defaultTarget);
 
-    // 3. Renderer with ACES Filmic Tone Mapping
-    const renderer = new THREE.WebGLRenderer({
-      antialias: true,
-      powerPreference: 'high-performance',
-      alpha: false,
-    });
+    // 3. WebGL Capability Detection & Safe Initialization
+    if (!isWebGLAvailable()) {
+      console.warn('WebGL is not available in this environment. Activating high-fidelity static poster fallback.');
+      setIsLoading(false);
+      setFallbackMode(true);
+      setFallbackReason('HARDWARE 3D ACCELERATION UNAVAILABLE');
+      return;
+    }
+
+    // Renderer with Mobile-Tiered DPR and ACES Filmic Tone Mapping
+    const initialDpr = getTargetPixelRatio();
+    const isMobileInitial = typeof window !== 'undefined' && window.innerWidth < 768;
+    const initialShadowMapSize = isMobileInitial ? 512 : 1024;
+
+    let renderer: THREE.WebGLRenderer;
+    try {
+      renderer = new THREE.WebGLRenderer({
+        antialias: true,
+        powerPreference: 'high-performance',
+        alpha: false,
+      });
+    } catch (err) {
+      console.warn('WebGLRenderer initialization threw an error. Activating high-fidelity static poster fallback:', err);
+      setIsLoading(false);
+      setFallbackMode(true);
+      setFallbackReason('WEBGL INITIALIZATION FAILED');
+      return;
+    }
+
     renderer.setSize(width, height);
-    renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 1.5));
+    renderer.setPixelRatio(initialDpr);
     renderer.toneMapping = THREE.ACESFilmicToneMapping;
     renderer.toneMappingExposure = 1.25;
     renderer.outputColorSpace = THREE.SRGBColorSpace;
@@ -269,6 +379,24 @@ export default function Bike3DExperience() {
     renderer.shadowMap.type = THREE.PCFShadowMap;
 
     container.appendChild(renderer.domElement);
+
+    // WebGL Context Loss & Restoration Handling
+    const handleContextLost = (event: Event) => {
+      event.preventDefault();
+      console.warn('WebGL graphics context was lost. Switching to static poster fallback.');
+      stopLoop();
+      setFallbackMode(true);
+      setFallbackReason('GRAPHICS CONTEXT INTERRUPTED');
+      setIsLoading(false);
+    };
+
+    const handleContextRestored = () => {
+      console.info('WebGL graphics context restored.');
+    };
+
+    const canvasElement = renderer.domElement;
+    canvasElement.addEventListener('webglcontextlost', handleContextLost, false);
+    canvasElement.addEventListener('webglcontextrestored', handleContextRestored, false);
 
     // 4. Model Pivot Group
     const modelGroup = new THREE.Group();
@@ -278,8 +406,8 @@ export default function Bike3DExperience() {
     const keyLight = new THREE.DirectionalLight(0xffffff, 3.2);
     keyLight.position.set(4.5, 5.5, 4.0);
     keyLight.castShadow = true;
-    keyLight.shadow.mapSize.width = 1024;
-    keyLight.shadow.mapSize.height = 1024;
+    keyLight.shadow.mapSize.width = initialShadowMapSize;
+    keyLight.shadow.mapSize.height = initialShadowMapSize;
     keyLight.shadow.bias = -0.0005;
     keyLight.shadow.normalBias = 0.02;
     scene.add(keyLight);
@@ -335,9 +463,9 @@ export default function Bike3DExperience() {
     threeRef.current.scene = scene;
     threeRef.current.camera = camera;
     threeRef.current.modelGroup = modelGroup;
+    threeRef.current.keyLight = keyLight;
 
     // 7. Load GLTF Model
-    const loader = new GLTFLoader();
     const primaryModelUrl = '/royal_enfield.glb';
 
     const handleModelLoaded = (gltf: any) => {
@@ -376,11 +504,11 @@ export default function Bike3DExperience() {
       const scaleFactor = 2.4 / (maxDim || 1);
       modelGroup.scale.setScalar(scaleFactor);
 
-      // Shadow and material updates
+      // Selective shadow casting and material updates
       root.traverse((node: THREE.Object3D) => {
         if ((node as THREE.Mesh).isMesh) {
           const mesh = node as THREE.Mesh;
-          mesh.castShadow = true;
+          mesh.castShadow = shouldMeshCastShadow(mesh.name);
           mesh.receiveShadow = true;
           mesh.frustumCulled = true;
           mesh.visible = true;
@@ -440,26 +568,56 @@ export default function Bike3DExperience() {
           renderer.compile(scene, camera);
         } catch {}
       }
+
+      threeRef.current.wakeUpLoop();
     };
 
-    // Load model using cached promise to prevent duplicate 25.5MB downloads
+    // Load model using cached promise with timeout to prevent indefinite hanging
     if (!cachedGltfPromise) {
       const loader = new GLTFLoader();
-      cachedGltfPromise = new Promise((resolve, reject) => {
+      const dracoLoader = new DRACOLoader();
+      dracoLoader.setDecoderPath('/draco/');
+      loader.setDRACOLoader(dracoLoader);
+      loader.setMeshoptDecoder(MeshoptDecoder);
+
+      let timeoutTimer: any = null;
+
+      const loadPromise = new Promise((resolve, reject) => {
         loader.load(
           primaryModelUrl,
           (gltf: any) => resolve(gltf),
           (xhr: any) => {
-            if (xhr.total > 0 && isMountedRef.current) {
-              setLoadProgress(Math.round((xhr.loaded / xhr.total) * 100));
+            if (isMountedRef.current) {
+              // Compressed Draco GLB size is 4,853,996 bytes. Use xhr.total if computable, fallback to known size.
+              const total = (xhr.total && xhr.total > 0) ? xhr.total : 4853996;
+              const loaded = xhr.loaded || 0;
+              const pct = Math.min(99, Math.round((loaded / total) * 100));
+              setLoadProgress(Math.max(1, pct));
             }
           },
           (err: any) => {
-            cachedGltfPromise = null; // Clear to allow retry on error
             reject(err);
           }
         );
       });
+
+      // 10-second safety timeout: never block user indefinitely if network or decoder stalls
+      const timeoutPromise = new Promise((_, reject) => {
+        timeoutTimer = setTimeout(() => {
+          reject(new Error('3D model load timed out after 10s'));
+        }, 10000);
+      });
+
+      cachedGltfPromise = Promise.race([loadPromise, timeoutPromise])
+        .then((res) => {
+          if (timeoutTimer) clearTimeout(timeoutTimer);
+          return res;
+        })
+        .catch((err) => {
+          if (timeoutTimer) clearTimeout(timeoutTimer);
+          cachedGltfPromise = null; // Clear to allow retry on error
+          throw err;
+        });
     }
 
     cachedGltfPromise
@@ -474,90 +632,129 @@ export default function Bike3DExperience() {
       })
       .catch((err: any) => {
         if (!isMountedRef.current) return;
-        console.error('Failed to load Royal Enfield GLTF model:', err);
+        const isTimeout = err?.message?.includes('timed out');
+        console.warn('Failed or timed out loading Royal Enfield GLTF model. Switching to high-fidelity static showcase:', err);
         setIsLoading(false);
-        setLoadError('UNABLE TO LOAD 3D MODEL. Please verify file availability in public directory.');
+        setFallbackMode(true);
+        setFallbackReason(isTimeout ? 'CONNECTION TIMED OUT' : '3D ASSET UNAVAILABLE');
       });
 
-    // 8. Animation & Render Loop with Visibility Observation
-    let lastTime = performance.now();
+    // 8. On-Demand Animation & Render Loop with Settle Damping
     const tempVec = new THREE.Vector3();
     let isSectionVisible = false;
     let isTabVisible = !document.hidden;
+    let settleFrames = 0;
+
+    const wakeUpLoop = () => {
+      if (!isSectionVisible || !isTabVisible) return;
+      settleFrames = 8;
+      if (!threeRef.current.animFrameId) {
+        threeRef.current.animFrameId = requestAnimationFrame(animate);
+      }
+    };
+
+    threeRef.current.wakeUpLoop = wakeUpLoop;
 
     const animate = () => {
-      threeRef.current.animFrameId = requestAnimationFrame(animate);
-
-      const now = performance.now();
-      lastTime = now;
-
       const state = threeRef.current;
+      if (!isSectionVisible || !isTabVisible || !state.renderer || !state.scene || !state.camera) {
+        state.animFrameId = null;
+        return;
+      }
 
-      // Apply rotation velocity damping / inertia
-      if (!state.isDragging) {
-        state.rotVelocity.x *= 0.92;
-        state.rotVelocity.y *= 0.92;
+      let isMoving = false;
 
-        state.rotationTarget.y += state.rotVelocity.x;
-        state.rotationTarget.x += state.rotVelocity.y;
+      // 1. Inertia & rotation velocity damping
+      if (state.isDragging) {
+        isMoving = true;
+      } else {
+        if (Math.abs(state.rotVelocity.x) > 0.0001 || Math.abs(state.rotVelocity.y) > 0.0001) {
+          state.rotVelocity.x *= 0.90;
+          state.rotVelocity.y *= 0.90;
 
-        state.rotationTarget.x = Math.max(-0.25, Math.min(0.40, state.rotationTarget.x));
-
-        // Idle subtle movement after 2s of inactivity
-        const timeSinceInteract = (Date.now() - state.lastInteractTime) / 1000;
-        if (timeSinceInteract > 2.0) {
-          const idleTime = (Date.now() - state.lastInteractTime - 2000) / 1000;
-          const idleSway = Math.sin(idleTime * 0.6) * 0.0012;
-          state.rotationTarget.y += idleSway;
-
-          if (state.modelGroup) {
-            state.modelGroup.position.y = Math.sin(idleTime * 1.2) * 0.012;
-          }
+          state.rotationTarget.y += state.rotVelocity.x;
+          state.rotationTarget.x += state.rotVelocity.y;
+          state.rotationTarget.x = Math.max(-0.25, Math.min(0.40, state.rotationTarget.x));
+          isMoving = true;
+        } else {
+          state.rotVelocity.x = 0;
+          state.rotVelocity.y = 0;
         }
       }
 
-      // Smoothly apply rotation target to modelGroup
+      // 2. Smoothly apply rotation target to modelGroup
       if (state.modelGroup) {
-        state.modelGroup.rotation.y = THREE.MathUtils.lerp(state.modelGroup.rotation.y, state.rotationTarget.y, 0.08);
-        state.modelGroup.rotation.x = THREE.MathUtils.lerp(state.modelGroup.rotation.x, state.rotationTarget.x, 0.08);
+        const dy = state.rotationTarget.y - state.modelGroup.rotation.y;
+        const dx = state.rotationTarget.x - state.modelGroup.rotation.x;
+        if (Math.abs(dy) > 0.0005 || Math.abs(dx) > 0.0005) {
+          state.modelGroup.rotation.y = THREE.MathUtils.lerp(state.modelGroup.rotation.y, state.rotationTarget.y, 0.08);
+          state.modelGroup.rotation.x = THREE.MathUtils.lerp(state.modelGroup.rotation.x, state.rotationTarget.x, 0.08);
+          isMoving = true;
+        } else {
+          state.modelGroup.rotation.y = state.rotationTarget.y;
+          state.modelGroup.rotation.x = state.rotationTarget.x;
+        }
+        if (state.modelGroup.position.y !== 0) {
+          state.modelGroup.position.y = THREE.MathUtils.lerp(state.modelGroup.position.y, 0, 0.1);
+          if (Math.abs(state.modelGroup.position.y) < 0.0001) state.modelGroup.position.y = 0;
+          else isMoving = true;
+        }
       }
 
-      // Smooth camera position and lookAt interpolation
-      state.currentCamPos.lerp(state.targetCamPos, 0.06);
-      state.currentLookAt.lerp(state.targetLookAt, 0.06);
+      // 3. Smooth camera position and lookAt interpolation
+      const camDistSq = state.currentCamPos.distanceToSquared(state.targetCamPos);
+      const lookDistSq = state.currentLookAt.distanceToSquared(state.targetLookAt);
+      if (camDistSq > 0.0002 || lookDistSq > 0.0002) {
+        state.currentCamPos.lerp(state.targetCamPos, 0.08);
+        state.currentLookAt.lerp(state.targetLookAt, 0.08);
+        isMoving = true;
+      } else {
+        state.currentCamPos.copy(state.targetCamPos);
+        state.currentLookAt.copy(state.targetLookAt);
+      }
 
       if (state.camera) {
         state.camera.position.copy(state.currentCamPos);
         state.camera.lookAt(state.currentLookAt);
       }
 
-      if (state.renderer && state.scene && state.camera) {
-        state.renderer.render(state.scene, state.camera);
+      // 4. Render 3D Scene
+      state.renderer.render(state.scene, state.camera);
 
-        // Hardware-accelerated direct DOM projection (ZERO React re-renders)
-        if (container && state.modelGroup) {
-          const rect = container.getBoundingClientRect();
-          BIKE_HOTSPOTS.forEach((h, idx) => {
-            const pinEl = pinRefs.current[idx];
-            if (!pinEl) return;
-            tempVec.set(h.worldAnchor.x, h.worldAnchor.y, h.worldAnchor.z);
-            tempVec.applyEuler(state.modelGroup!.rotation);
-            tempVec.add(state.modelGroup!.position);
-            tempVec.project(state.camera!);
+      // 5. Hardware-accelerated direct DOM projection (ZERO React re-renders)
+      if (container && state.modelGroup && state.camera) {
+        const rect = container.getBoundingClientRect();
+        BIKE_HOTSPOTS.forEach((h, idx) => {
+          const pinEl = pinRefs.current[idx];
+          if (!pinEl) return;
+          tempVec.set(h.worldAnchor.x, h.worldAnchor.y, h.worldAnchor.z);
+          tempVec.applyEuler(state.modelGroup!.rotation);
+          tempVec.add(state.modelGroup!.position);
+          tempVec.project(state.camera!);
 
-            const isBehind = tempVec.z > 1;
-            const sx = ((tempVec.x + 1) * 0.5) * rect.width;
-            const sy = ((-tempVec.y + 1) * 0.5) * rect.height;
-            const isVisible = !isBehind && sx >= 20 && sx <= rect.width - 20 && sy >= 20 && sy <= rect.height - 20;
+          const isBehind = tempVec.z > 1;
+          const sx = ((tempVec.x + 1) * 0.5) * rect.width;
+          const sy = ((-tempVec.y + 1) * 0.5) * rect.height;
+          const isVisible = !isBehind && sx >= 20 && sx <= rect.width - 20 && sy >= 20 && sy <= rect.height - 20;
 
-            if (isVisible) {
-              pinEl.style.display = 'block';
-              pinEl.style.transform = `translate3d(${sx}px, ${sy}px, 0) translate(-50%, -50%)`;
-            } else {
-              pinEl.style.display = 'none';
-            }
-          });
-        }
+          if (isVisible) {
+            pinEl.style.display = 'block';
+            pinEl.style.transform = `translate3d(${sx}px, ${sy}px, 0) translate(-50%, -50%)`;
+          } else {
+            pinEl.style.display = 'none';
+          }
+        });
+      }
+
+      // 6. On-Demand Frameloop Transition: continue loop if moving, or sleep when settled
+      if (isMoving) {
+        settleFrames = 8;
+        state.animFrameId = requestAnimationFrame(animate);
+      } else if (settleFrames > 0) {
+        settleFrames--;
+        state.animFrameId = requestAnimationFrame(animate);
+      } else {
+        state.animFrameId = null;
       }
     };
 
@@ -569,9 +766,7 @@ export default function Bike3DExperience() {
     };
 
     const startLoop = () => {
-      if (!threeRef.current.animFrameId && isSectionVisible && isTabVisible) {
-        threeRef.current.animFrameId = requestAnimationFrame(animate);
-      }
+      wakeUpLoop();
     };
 
     // Pause rendering when section is off-screen to preserve battery, CPU and GPU
@@ -608,6 +803,26 @@ export default function Bike3DExperience() {
       camera.aspect = w / h;
       camera.updateProjectionMatrix();
       renderer.setSize(w, h);
+
+      // Mobile Performance & Quality Tiering
+      const targetDpr = getTargetPixelRatio();
+      if (renderer.getPixelRatio() !== targetDpr) {
+        renderer.setPixelRatio(targetDpr);
+      }
+
+      // Responsive Shadow Map Resolution Tiering (512 on mobile <768px, 1024 on desktop)
+      const isMobileNow = window.innerWidth < 768;
+      const targetShadowSize = isMobileNow ? 512 : 1024;
+      const light = threeRef.current.keyLight;
+      if (light && light.shadow.mapSize.width !== targetShadowSize) {
+        light.shadow.mapSize.set(targetShadowSize, targetShadowSize);
+        if (light.shadow.map) {
+          light.shadow.map.dispose();
+          light.shadow.map = null;
+        }
+      }
+
+      wakeUpLoop();
     };
 
     window.addEventListener('resize', handleResize, { passive: true });
@@ -651,6 +866,20 @@ export default function Bike3DExperience() {
       shadowMat.dispose();
       shadowTex.dispose();
 
+      if (keyLight.shadow?.map) {
+        keyLight.shadow.map.dispose();
+      }
+
+      canvasElement.removeEventListener('webglcontextlost', handleContextLost);
+      canvasElement.removeEventListener('webglcontextrestored', handleContextRestored);
+
+      threeRef.current.wakeUpLoop = () => {};
+      threeRef.current.keyLight = null;
+      threeRef.current.modelGroup = null;
+      threeRef.current.camera = null;
+      threeRef.current.scene = null;
+      threeRef.current.renderer = null;
+
       renderer.dispose();
       renderer.forceContextLoss();
 
@@ -668,6 +897,7 @@ export default function Bike3DExperience() {
     state.isDragging = true;
     state.prevPointerPos = { x: e.clientX, y: e.clientY };
     state.lastInteractTime = Date.now();
+    state.wakeUpLoop();
   };
 
   const handlePointerMove = (e: React.PointerEvent) => {
@@ -686,11 +916,13 @@ export default function Bike3DExperience() {
     state.rotationTarget.y += dx * 0.005;
     state.rotationTarget.x += dy * 0.005;
     state.rotationTarget.x = Math.max(-0.25, Math.min(0.40, state.rotationTarget.x));
+    state.wakeUpLoop();
   };
 
   const handlePointerUp = () => {
     threeRef.current.isDragging = false;
     threeRef.current.lastInteractTime = Date.now();
+    threeRef.current.wakeUpLoop();
   };
 
   /**
@@ -706,6 +938,7 @@ export default function Bike3DExperience() {
     const newDist = Math.max(1.4, Math.min(4.8, curDist + zoomDelta));
 
     state.targetCamPos.copy(state.targetLookAt).addScaledVector(dir, newDist);
+    state.wakeUpLoop();
   };
 
   /**
@@ -719,6 +952,7 @@ export default function Bike3DExperience() {
     const curDist = state.targetCamPos.distanceTo(state.targetLookAt);
     const newDist = Math.max(1.4, Math.min(4.8, curDist + delta));
     state.targetCamPos.copy(state.targetLookAt).addScaledVector(dir, newDist);
+    state.wakeUpLoop();
   };
 
   /**
@@ -737,6 +971,7 @@ export default function Bike3DExperience() {
     // Smooth model orientation to feature the component
     state.rotationTarget = { x: comp.modelRotation.x, y: comp.modelRotation.y };
     state.rotVelocity = { x: 0, y: 0 };
+    state.wakeUpLoop();
 
     if (detailsPanelRef.current) {
       gsap.fromTo(
@@ -758,6 +993,7 @@ export default function Bike3DExperience() {
     state.targetLookAt.copy(state.defaultTarget);
     state.rotationTarget = { x: 0, y: 0.35 };
     state.rotVelocity = { x: 0, y: 0 };
+    state.wakeUpLoop();
   }, []);
 
   /**
@@ -769,15 +1005,19 @@ export default function Bike3DExperience() {
       if (e.key === 'ArrowLeft') {
         state.rotationTarget.y -= 0.15;
         state.lastInteractTime = Date.now();
+        state.wakeUpLoop();
       } else if (e.key === 'ArrowRight') {
         state.rotationTarget.y += 0.15;
         state.lastInteractTime = Date.now();
+        state.wakeUpLoop();
       } else if (e.key === 'ArrowUp') {
         state.rotationTarget.x = Math.max(-0.25, state.rotationTarget.x - 0.1);
         state.lastInteractTime = Date.now();
+        state.wakeUpLoop();
       } else if (e.key === 'ArrowDown') {
         state.rotationTarget.x = Math.min(0.40, state.rotationTarget.x + 0.1);
         state.lastInteractTime = Date.now();
+        state.wakeUpLoop();
       } else if (e.key === '+' || e.key === '=') {
         handleZoom('in');
       } else if (e.key === '-' || e.key === '_') {
@@ -1036,7 +1276,7 @@ export default function Bike3DExperience() {
                   className="text-xs tracking-[0.25em] text-[#315F9C] uppercase font-semibold"
                   style={{ fontFamily: "'Rajdhani', sans-serif" }}
                 >
-                  LOADING MACHINE {loadProgress > 0 ? `${loadProgress}%` : ''}
+                  LOADING MACHINE {Math.max(1, loadProgress)}%
                 </p>
               </div>
             )}
@@ -1063,103 +1303,159 @@ export default function Bike3DExperience() {
               </div>
             )}
 
-            {/* Three.js Canvas Container */}
-            <div
-              ref={canvasContainerRef}
-              onPointerDown={handlePointerDown}
-              onPointerMove={handlePointerMove}
-              onPointerUp={handlePointerUp}
-              onPointerLeave={handlePointerUp}
-              onDoubleClick={resetCamera}
-              onWheel={handleWheel}
-              className="absolute inset-0 w-full h-full cursor-grab active:cursor-grabbing touch-none"
-              style={{ touchAction: 'none' }}
-            />
+            {/* Fallback Static Showcase or Interactive 3D Canvas */}
+            {fallbackMode ? (
+              <div className="absolute inset-0 w-full h-full flex flex-col items-center justify-center p-4 sm:p-6 select-none bg-[#F4F0E8] z-30">
+                {/* Ambient Studio Lighting Glow */}
+                <div
+                  className="absolute inset-0 pointer-events-none opacity-60"
+                  style={{
+                    background: 'radial-gradient(circle at 50% 50%, rgba(255,255,255,0.7) 0%, rgba(244,240,232,0) 70%)',
+                  }}
+                />
 
-            {/* 3D Hotspot Interactive Pins over the Motorcycle */}
-            {!isLoading && !loadError && (
-              <div className="absolute inset-0 pointer-events-none z-20 overflow-hidden">
-                {BIKE_HOTSPOTS.map((pin, idx) => {
-                  const isSelected = activeIdx === idx;
-                  return (
-                    <div
-                      key={pin.id}
-                      ref={(el) => {
-                        pinRefs.current[idx] = el;
-                      }}
-                      style={{
-                        position: 'absolute',
-                        left: 0,
-                        top: 0,
-                        display: 'none',
-                        fontFamily: "'Rajdhani', sans-serif",
-                      }}
-                      className="pointer-events-auto group will-change-transform"
-                    >
-                      <button
-                        id={`hotspot-pin-${pin.id}`}
-                        type="button"
-                        onClick={() => selectHotspot(idx)}
-                        className="relative flex items-center justify-center w-8 h-8 rounded-full cursor-pointer transition-transform duration-300 hover:scale-125 focus:outline-none"
-                        aria-label={`View ${pin.title}`}
-                      >
-                        {/* Pulse Ring */}
-                        <span
-                          className={`absolute inset-0 rounded-full transition-opacity duration-300 ${
-                            isSelected
-                              ? 'bg-[#D4A64A]/50 animate-ping'
-                              : 'bg-[#D71920]/25 group-hover:bg-[#C58A28]/35'
-                          }`}
-                        />
-                        {/* Core Badge */}
-                        <span
-                          className={`relative flex items-center justify-center w-7 h-7 rounded-full text-[11px] font-black tracking-tight transition-all duration-300 border ${
-                            isSelected
-                              ? 'bg-gradient-to-b from-[#FFF4BC] via-[#D4A64A] to-[#A87B20] text-[#1F0202] border-[#FFF4BC] shadow-[0_0_20px_rgba(212,166,74,0.95)] scale-110'
-                              : 'bg-gradient-to-b from-[#D71920] to-[#8B0000] text-white border-[#F3D58A]/60 shadow-[0_3px_12px_rgba(139,0,0,0.55)] group-hover:border-[#F3D58A] group-hover:scale-105'
-                          }`}
-                        >
-                          {pin.num}
-                        </span>
-                      </button>
-                    </div>
-                  );
-                })}
+                {/* Status Pill Badge */}
+                <div className="absolute top-4 left-4 z-40 flex items-center gap-2 px-3 py-1.5 rounded-full bg-white/90 backdrop-blur-md border border-[rgba(23,40,61,0.14)] shadow-sm">
+                  <span className="w-2 h-2 rounded-full bg-[#C58A28]" />
+                  <span
+                    className="text-[10px] sm:text-[11px] font-bold tracking-[0.2em] text-[#17283D] uppercase"
+                    style={{ fontFamily: "'Rajdhani', sans-serif" }}
+                  >
+                    STATIC SHOWCASE • {fallbackReason || 'FALLBACK ACTIVE'}
+                  </span>
+                </div>
+
+                {/* High-Fidelity Active Component Image or Full Motorcycle */}
+                <div className="relative w-full h-full flex flex-col items-center justify-center max-w-2xl max-h-[460px]">
+                  <img
+                    key={activeIdx !== null ? BIKE_HOTSPOTS[activeIdx].id : 'full-view'}
+                    src={
+                      activeIdx !== null && HOTSPOT_FALLBACK_IMAGES[BIKE_HOTSPOTS[activeIdx].id]
+                        ? HOTSPOT_FALLBACK_IMAGES[BIKE_HOTSPOTS[activeIdx].id]
+                        : FULL_BIKE_FALLBACK_IMAGE
+                    }
+                    alt={activeIdx !== null ? BIKE_HOTSPOTS[activeIdx].title : 'Royal Enfield Classic 350'}
+                    className="max-w-[92%] max-h-[82%] object-contain drop-shadow-[0_16px_32px_rgba(23,40,61,0.22)] transition-all duration-300 ease-out"
+                    loading="eager"
+                  />
+
+                  {/* Studio Ground Radial Contact Shadow */}
+                  <div className="w-[65%] max-w-[420px] h-5 -mt-2 bg-[radial-gradient(ellipse_at_center,rgba(23,40,61,0.32)_0%,rgba(23,40,61,0.08)_50%,transparent_75%)] rounded-full blur-[3px] pointer-events-none" />
+                </div>
+
+                {/* Fallback Interactive Guide Hint */}
+                <div
+                  className="absolute bottom-4 left-6 right-6 flex items-center justify-between text-[11px] tracking-[0.16em] text-[#536174] uppercase z-20 font-semibold"
+                  style={{ fontFamily: "'Rajdhani', sans-serif" }}
+                >
+                  <div className="flex items-center gap-2">
+                    <Info className="w-3.5 h-3.5 text-[#C58A28] shrink-0" />
+                    <span>SELECT COMPONENTS BELOW TO INSPECT CRAFTSMANSHIP & SPECIFICATIONS</span>
+                  </div>
+                  <span className="hidden sm:inline text-[#C58A28]">CLASSIC 350 HERITAGE</span>
+                </div>
               </div>
+            ) : (
+              <>
+                {/* Three.js Canvas Container */}
+                <div
+                  ref={canvasContainerRef}
+                  onPointerDown={handlePointerDown}
+                  onPointerMove={handlePointerMove}
+                  onPointerUp={handlePointerUp}
+                  onPointerLeave={handlePointerUp}
+                  onDoubleClick={resetCamera}
+                  onWheel={handleWheel}
+                  className="absolute inset-0 w-full h-full cursor-grab active:cursor-grabbing touch-none"
+                  style={{ touchAction: 'none' }}
+                />
+
+                {/* 3D Hotspot Interactive Pins over the Motorcycle */}
+                {!isLoading && !loadError && (
+                  <div className="absolute inset-0 pointer-events-none z-20 overflow-hidden">
+                    {BIKE_HOTSPOTS.map((pin, idx) => {
+                      const isSelected = activeIdx === idx;
+                      return (
+                        <div
+                          key={pin.id}
+                          ref={(el) => {
+                            pinRefs.current[idx] = el;
+                          }}
+                          style={{
+                            position: 'absolute',
+                            left: 0,
+                            top: 0,
+                            display: 'none',
+                            fontFamily: "'Rajdhani', sans-serif",
+                          }}
+                          className="pointer-events-auto group will-change-transform"
+                        >
+                          <button
+                            id={`hotspot-pin-${pin.id}`}
+                            type="button"
+                            onClick={() => selectHotspot(idx)}
+                            className="relative flex items-center justify-center w-8 h-8 rounded-full cursor-pointer transition-transform duration-300 hover:scale-125 focus:outline-none"
+                            aria-label={`View ${pin.title}`}
+                          >
+                            {/* Pulse Ring */}
+                            <span
+                              className={`absolute inset-0 rounded-full transition-opacity duration-300 ${
+                                isSelected
+                                  ? 'bg-[#D4A64A]/50 animate-ping'
+                                  : 'bg-[#D71920]/25 group-hover:bg-[#C58A28]/35'
+                              }`}
+                            />
+                            {/* Core Badge */}
+                            <span
+                              className={`relative flex items-center justify-center w-7 h-7 rounded-full text-[11px] font-black tracking-tight transition-all duration-300 border ${
+                                isSelected
+                                  ? 'bg-gradient-to-b from-[#FFF4BC] via-[#D4A64A] to-[#A87B20] text-[#1F0202] border-[#FFF4BC] shadow-[0_0_20px_rgba(212,166,74,0.95)] scale-110'
+                                  : 'bg-gradient-to-b from-[#D71920] to-[#8B0000] text-white border-[#F3D58A]/60 shadow-[0_3px_12px_rgba(139,0,0,0.55)] group-hover:border-[#F3D58A] group-hover:scale-105'
+                              }`}
+                            >
+                              {pin.num}
+                            </span>
+                          </button>
+                        </div>
+                      );
+                    })}
+                  </div>
+                )}
+
+                {/* Interactive Cue Hint */}
+                <div
+                  className="absolute bottom-4 left-6 pointer-events-none select-none flex items-center gap-3 text-[11px] tracking-[0.18em] text-[#536174] uppercase z-20 font-semibold"
+                  style={{ fontFamily: "'Rajdhani', sans-serif" }}
+                >
+                  <Compass className="w-3.5 h-3.5 text-[#C58A28]" />
+                  <span>DRAG TO ROTATE • WHEEL / PINCH TO ZOOM • DOUBLE CLICK TO RESET</span>
+                </div>
+
+                {/* Zoom Buttons (+ / -) */}
+                <div className="absolute right-4 bottom-4 flex flex-col gap-2.5 z-20">
+                  <button
+                    id="btn-zoom-in"
+                    type="button"
+                    onClick={() => handleZoom('in')}
+                    className="w-8 h-8 rounded-lg bg-white/90 hover:bg-white border border-[rgba(23,40,61,0.16)] hover:border-[#C58A28] flex items-center justify-center text-[#17283D] hover:text-[#D71920] transition-all cursor-pointer backdrop-blur-sm shadow-sm"
+                    title="Zoom In (+)"
+                    aria-label="Zoom in"
+                  >
+                    <Plus className="w-4 h-4" />
+                  </button>
+                  <button
+                    id="btn-zoom-out"
+                    type="button"
+                    onClick={() => handleZoom('out')}
+                    className="w-8 h-8 rounded-lg bg-white/90 hover:bg-white border border-[rgba(23,40,61,0.16)] hover:border-[#C58A28] flex items-center justify-center text-[#17283D] hover:text-[#D71920] transition-all cursor-pointer backdrop-blur-sm shadow-sm"
+                    title="Zoom Out (-)"
+                    aria-label="Zoom out"
+                  >
+                    <Minus className="w-4 h-4" />
+                  </button>
+                </div>
+              </>
             )}
-
-            {/* Interactive Cue Hint */}
-            <div
-              className="absolute bottom-4 left-6 pointer-events-none select-none flex items-center gap-3 text-[11px] tracking-[0.18em] text-[#536174] uppercase z-20 font-semibold"
-              style={{ fontFamily: "'Rajdhani', sans-serif" }}
-            >
-              <Compass className="w-3.5 h-3.5 text-[#C58A28]" />
-              <span>DRAG TO ROTATE • WHEEL / PINCH TO ZOOM • DOUBLE CLICK TO RESET</span>
-            </div>
-
-            {/* Zoom Buttons (+ / -) */}
-            <div className="absolute right-4 bottom-4 flex flex-col gap-2.5 z-20">
-              <button
-                id="btn-zoom-in"
-                type="button"
-                onClick={() => handleZoom('in')}
-                className="w-8 h-8 rounded-lg bg-white/90 hover:bg-white border border-[rgba(23,40,61,0.16)] hover:border-[#C58A28] flex items-center justify-center text-[#17283D] hover:text-[#D71920] transition-all cursor-pointer backdrop-blur-sm shadow-sm"
-                title="Zoom In (+)"
-                aria-label="Zoom in"
-              >
-                <Plus className="w-4 h-4" />
-              </button>
-              <button
-                id="btn-zoom-out"
-                type="button"
-                onClick={() => handleZoom('out')}
-                className="w-8 h-8 rounded-lg bg-white/90 hover:bg-white border border-[rgba(23,40,61,0.16)] hover:border-[#C58A28] flex items-center justify-center text-[#17283D] hover:text-[#D71920] transition-all cursor-pointer backdrop-blur-sm shadow-sm"
-                title="Zoom Out (-)"
-                aria-label="Zoom out"
-              >
-                <Minus className="w-4 h-4" />
-              </button>
-            </div>
           </div>
           </div>
 
