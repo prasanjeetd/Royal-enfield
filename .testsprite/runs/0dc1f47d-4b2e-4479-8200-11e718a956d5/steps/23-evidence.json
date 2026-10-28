@@ -1,8 +1,0 @@
-[
-  {
-    "kind": "snapshot",
-    "stepIndex": 23,
-    "summary": "Step 23 'Click 'SEND MESSAGE button'' passed (captured at 2026-10-19T11:46:48.805Z).",
-    "path": "steps/23-snapshot.html"
-  }
-]

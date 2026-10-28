@@ -1,8 +1,0 @@
-[
-  {
-    "kind": "snapshot",
-    "stepIndex": 5,
-    "summary": "Step 5 'Click '01 ENGINE button'' failed. Error: Waited for 3 seconds",
-    "path": "steps/05-snapshot.html"
-  }
-]

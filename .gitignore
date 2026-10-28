@@ -23,3 +23,6 @@ Thumbs.db
 chrome-temp-*/
 scratch/
 screenshots/
+
+# TestSprite generated run evidence (plans in testsprite-plans/ stay tracked)
+.testsprite/runs/

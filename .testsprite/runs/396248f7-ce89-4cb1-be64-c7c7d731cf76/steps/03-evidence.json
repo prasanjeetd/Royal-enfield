@@ -1,8 +1,0 @@
-[
-  {
-    "kind": "snapshot",
-    "stepIndex": 3,
-    "summary": "Step 3 'Click '01 ENGINE button'' failed. Error: Test failed at step 3 (click) — Click the 'VIEW DETAIL' button under 'J-SERIES ENGINE' to open the engine detail modal.\n\nError: Failed to click element 933: Event handler browser_use.browser.watchdog_base.DefaultActionWatchdog.on_ClickElementEvent#4880(?▶ ClickElementEvent#0c9b 🏃) timed out after 15.0s",
-    "path": "steps/03-snapshot.html"
-  }
-]
