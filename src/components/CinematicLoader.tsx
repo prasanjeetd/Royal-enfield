@@ -5,15 +5,21 @@ interface CinematicLoaderProps {
 }
 
 /**
- * Essential hero assets to preload and track
+ * Essential above-the-fold critical assets required for immediate initial hero view
  */
-const CRITICAL_HERO_ASSETS = [
+const PRIMARY_CRITICAL_ASSETS = [
   '/logo.webp',
   '/bikes/classic-350.webp',
+];
+
+/**
+ * Secondary carousel assets that preload in parallel without holding the initial loading screen hostage
+ */
+const SECONDARY_HERO_ASSETS = [
   '/bikes/bullet-350.webp',
   '/bikes/hunter-350.webp',
   '/bikes/meteor-350.webp',
-  '/bikes/himalayan-450.webp',
+  '/bikes/re-450.png',
   '/bikes/0493b03c-c92c-4449-b4d2-93b88ee2eec7.webp',
 ];
 
@@ -25,7 +31,13 @@ const CRITICAL_HERO_ASSETS = [
 export default function CinematicLoader({ onLoaded }: CinematicLoaderProps) {
   const [isRendered, setIsRendered] = useState<boolean>(true);
   const [isFadingOut, setIsFadingOut] = useState<boolean>(false);
-  const [percent, setPercent] = useState<number>(14);
+
+  // Seamless hand-off from Frame-0 preloader: start from wherever Frame-0 reached
+  const initialPercent = typeof window !== 'undefined' && (window as any).__initialProgress
+    ? Math.max(14, Math.min(92, Math.round((window as any).__initialProgress)))
+    : 14;
+
+  const [percent, setPercent] = useState<number>(initialPercent);
 
   const progressBarRef = useRef<HTMLDivElement>(null);
   const progressTextRef = useRef<HTMLSpanElement>(null);
@@ -34,14 +46,20 @@ export default function CinematicLoader({ onLoaded }: CinematicLoaderProps) {
     let isMounted = true;
     const startTime = performance.now();
 
-    let realAssetsReady = false;
+    let criticalAssetsReady = false;
     let completed = false;
     let rafId: number | null = null;
     let heartbeatId: any = null;
 
+    // Track handled URLs in a Set to guarantee zero double-counting on cached assets
+    const resolvedAssets = new Set<string>();
+    let primaryResolvedCount = 0;
+    let secondaryResolvedCount = 0;
+    let cachedCount = 0;
+
     // Direct DOM updater for fluid 60fps animation
     const updateProgress = (val: number) => {
-      const clamped = Math.min(100, Math.max(14, val));
+      const clamped = Math.min(100, Math.max(initialPercent, val));
       const rounded = Math.round(clamped);
 
       if (progressBarRef.current) {
@@ -52,45 +70,70 @@ export default function CinematicLoader({ onLoaded }: CinematicLoaderProps) {
       }
     };
 
-    // Initialize DOM display immediately on mount
-    updateProgress(14);
+    // Initialize DOM display immediately from Frame-0 hand-off value
+    updateProgress(initialPercent);
 
-    // Preload critical assets in parallel using Image & font readiness
-    let loadedCount = 0;
-    let cachedCount = 0;
-    const totalAssets = CRITICAL_HERO_ASSETS.length;
+    const handleAssetResolved = (url: string, isPrimary: boolean, success: boolean, wasCached: boolean) => {
+      if (!isMounted || resolvedAssets.has(url)) return;
+      resolvedAssets.add(url);
 
-    const checkAllDone = () => {
-      if (!isMounted) return;
-      loadedCount++;
-      if (loadedCount >= totalAssets) {
-        realAssetsReady = true;
+      if (wasCached) {
+        cachedCount++;
+      }
+
+      if (!success) {
+        console.warn(`[CinematicLoader] Asset warning: failed to preload "${url}", continuing gracefully.`);
+      }
+
+      if (isPrimary) {
+        primaryResolvedCount++;
+        if (primaryResolvedCount >= PRIMARY_CRITICAL_ASSETS.length) {
+          criticalAssetsReady = true;
+        }
+      } else {
+        secondaryResolvedCount++;
       }
     };
 
-    CRITICAL_HERO_ASSETS.forEach((url) => {
+    const preloadAsset = (url: string, isPrimary: boolean) => {
       const img = new Image();
-      img.onload = checkAllDone;
-      img.onerror = checkAllDone;
-      img.src = url;
-      if (img.complete) {
-        cachedCount++;
-        checkAllDone();
-      }
-    });
+      let settled = false;
 
+      const finish = (ok: boolean, fromCache: boolean) => {
+        if (settled) return;
+        settled = true;
+        handleAssetResolved(url, isPrimary, ok, fromCache);
+      };
+
+      img.onload = () => finish(true, false);
+      img.onerror = () => finish(false, false);
+      img.src = url;
+
+      if (img.complete) {
+        finish(true, true);
+      }
+    };
+
+    // Preload primary critical assets (blocking threshold)
+    PRIMARY_CRITICAL_ASSETS.forEach((url) => preloadAsset(url, true));
+
+    // Preload secondary carousel assets in parallel (non-blocking contribution)
+    SECONDARY_HERO_ASSETS.forEach((url) => preloadAsset(url, false));
+
+    // Check font readiness
     if (document.fonts && document.fonts.ready) {
-      document.fonts.ready.then(() => {}).catch(() => {});
+      document.fonts.ready
+        .then(() => {})
+        .catch(() => {});
     }
 
-    // Adapt display duration: warm cache exits swiftly (350ms); fresh loads take 750ms max
-    const isWarm = cachedCount >= totalAssets;
-    const minDisplayDuration = isWarm ? 350 : 750;
-    const maxSafetyDuration = 1800; // Never block the user longer than 1.8s
+    // Dynamic duration: instant exit when all assets are pre-cached, smooth ramp otherwise
+    const isWarm = cachedCount >= PRIMARY_CRITICAL_ASSETS.length;
+    const minDisplayDuration = isWarm ? 280 : 650;
+    const maxSafetyDuration = 1800; // Fail-safe: never block user longer than 1.8s
 
-    // Safety timeout: If network is slow or offline, mark assets as ready
     const safetyTimer = setTimeout(() => {
-      realAssetsReady = true;
+      criticalAssetsReady = true;
     }, maxSafetyDuration);
 
     // Core progress tick computation
@@ -99,22 +142,25 @@ export default function CinematicLoader({ onLoaded }: CinematicLoaderProps) {
 
       const elapsed = currentTime - startTime;
 
-      // Real asset weight: ratio of loaded critical assets
-      const assetProgressFactor = Math.min(1, loadedCount / totalAssets);
+      // Real asset weight factors
+      const primaryFactor = primaryResolvedCount / PRIMARY_CRITICAL_ASSETS.length;
+      const secondaryFactor = secondaryResolvedCount / SECONDARY_HERO_ASSETS.length;
+      // Combined asset readiness: 75% primary, 25% secondary
+      const assetFactor = primaryFactor * 0.75 + secondaryFactor * 0.25;
 
-      let target = 14;
+      let target = initialPercent;
 
-      if (!realAssetsReady || elapsed < minDisplayDuration) {
+      if (!criticalAssetsReady || elapsed < minDisplayDuration) {
         const timeFactor = Math.min(1, elapsed / minDisplayDuration);
-        // Combined blend of real assets ready + smooth ease-out curve
-        const progressFactor = Math.max(timeFactor, assetProgressFactor);
+        const progressFactor = Math.max(timeFactor * 0.45, assetFactor);
         const eased = 1 - Math.pow(1 - progressFactor, 2.0);
-        target = 14 + eased * (88 - 14);
+        // Progress naturally ascends toward 92% based on real loading
+        target = initialPercent + eased * (92 - initialPercent);
       } else {
-        // Assets are ready: glide swiftly from current value to 100%
+        // Critical assets are ready: glide smoothly to 100%
         const finishElapsed = elapsed - minDisplayDuration;
-        const finishFactor = Math.min(1, finishElapsed / 220);
-        target = 88 + finishFactor * 12;
+        const finishFactor = Math.min(1, finishElapsed / 200);
+        target = 92 + finishFactor * 8;
       }
 
       updateProgress(target);
@@ -165,7 +211,7 @@ export default function CinematicLoader({ onLoaded }: CinematicLoaderProps) {
       if (heartbeatId) clearInterval(heartbeatId);
       if (rafId) cancelAnimationFrame(rafId);
     };
-  }, [onLoaded]);
+  }, [initialPercent, onLoaded]);
 
   if (!isRendered) {
     return null;

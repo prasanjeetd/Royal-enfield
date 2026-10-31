@@ -79,7 +79,7 @@ export const BIKES: Bike[] = [
   },
   {
     name: 'HIMALAYAN 450',
-    src: '/bikes/himalayan-450.webp',
+    src: '/bikes/re-450.png',
     bg: '#0B0B0B',
     panel: '#1A1A1A',
     tagline: 'Built For All Roads & Pure Adventure',

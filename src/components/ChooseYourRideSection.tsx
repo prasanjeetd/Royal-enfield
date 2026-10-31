@@ -309,12 +309,12 @@ export default function ChooseYourRideSection() {
         {/* ===================================================================
             SECTION HEADER: TWO-COLUMN CLEAN GRID
             =================================================================== */}
-        <div ref={headerRef} className="collection-header mb-8 sm:mb-10 w-full">
+        <div ref={headerRef} className="collection-header mb-3 sm:mb-4 w-full">
           {/* Category Eyebrow */}
-          <div className="flex items-center gap-3 mb-3">
+          <div className="flex items-center gap-2 sm:gap-3 mb-1 sm:mb-1.5">
             <span className="w-1.5 h-1.5 rounded-full bg-[#C58A28] animate-pulse" />
             <span
-              className="text-[14px] tracking-[0.25em] text-[#C58A28] uppercase font-semibold"
+              className="text-[12px] sm:text-[13px] tracking-[0.25em] text-[#C58A28] uppercase font-semibold"
               style={{ fontFamily: "'Rajdhani', sans-serif" }}
             >
               ROYAL ENFIELD / COLLECTION
@@ -325,7 +325,7 @@ export default function ChooseYourRideSection() {
           <div className="collection-header-grid w-full">
             <div className="collection-header-left">
               <h2
-                className="text-4xl sm:text-5xl lg:text-6xl uppercase tracking-[0.03em] leading-[0.92] m-0 heading-chiselled-hero"
+                className="text-3xl sm:text-4xl lg:text-[2.6rem] xl:text-5xl uppercase tracking-[0.03em] leading-[0.92] m-0 heading-chiselled-hero"
                 style={{
                   fontFamily: "'Bebas Neue', sans-serif",
                   color: '#E30100',
@@ -337,14 +337,14 @@ export default function ChooseYourRideSection() {
                   filter: 'drop-shadow(0 2px 0px #593B00) drop-shadow(0 3px 1px #1F0202) drop-shadow(0 6px 16px rgba(0, 0, 0, 0.4))',
                 }}
               >
-                <span className="block">CHOOSE</span>
-                <span className="block">YOUR RIDE.</span>
+                <span className="block sm:inline">CHOOSE </span>
+                <span className="block sm:inline">YOUR RIDE.</span>
               </h2>
             </div>
 
             <div className="collection-header-right">
               <p
-                className="text-[14px] text-[#536174] max-w-md font-normal leading-[1.65] m-0"
+                className="text-[13px] sm:text-[14px] text-[#536174] max-w-md font-normal leading-[1.5] m-0"
                 style={{ fontFamily: "'Inter', sans-serif" }}
               >
                 Explore the machines and find the one that fits your journey.
@@ -357,13 +357,13 @@ export default function ChooseYourRideSection() {
             MINIMAL BIKE SELECTOR NAVIGATION & PROGRESS
             =================================================================== */}
         <div
-          className="collection-nav-row w-full flex flex-col md:flex-row md:items-center justify-between gap-3 pb-3 border-b border-[rgba(23,40,61,0.1)] mb-2 sm:mb-3"
+          className="collection-nav-row w-full flex flex-col md:flex-row md:items-center justify-between gap-2.5 pb-2 border-b border-[rgba(23,40,61,0.1)] mb-1.5 sm:mb-2"
           style={{ fontFamily: "'Rajdhani', sans-serif" }}
         >
           {/* Horizontal Bike Tabs */}
           <div
             ref={navTabsRef}
-            className="collection-nav-tabs flex items-center gap-3 sm:gap-3.5 overflow-x-auto py-1"
+            className="collection-nav-tabs flex items-center gap-2 sm:gap-2.5 overflow-x-auto py-0.5"
           >
             {BIKES.map((bike, idx) => {
               const isActive = idx === activeIndex;
@@ -384,7 +384,7 @@ export default function ChooseYourRideSection() {
                         }
                       : {})
                   }}
-                  className={`px-3.5 sm:px-4 py-1.5 rounded-full text-[14px] uppercase tracking-wider transition-all duration-300 flex items-center gap-3 whitespace-nowrap cursor-pointer font-semibold ${
+                  className={`px-3 sm:px-3.5 py-1 rounded-full text-[13px] uppercase tracking-wider transition-all duration-300 flex items-center gap-2 whitespace-nowrap cursor-pointer font-semibold ${
                     isActive
                       ? 'text-white border border-[#E30100]'
                       : 'text-[#536174] hover:text-[#E30100] hover:bg-white/70 border border-transparent'
@@ -392,7 +392,7 @@ export default function ChooseYourRideSection() {
                   aria-label={`Select ${bike.name}`}
                 >
                   <span
-                    className="text-[14px] font-bold"
+                    className="text-[13px] font-bold"
                     style={{ color: isActive ? '#FFF4BC' : '#C58A28' }}
                   >
                     0{idx + 1}
@@ -404,43 +404,43 @@ export default function ChooseYourRideSection() {
           </div>
 
           {/* Counter, Progress Bar & Arrow Controls */}
-          <div className="collection-nav-controls flex items-center justify-between sm:justify-end gap-5">
+          <div className="collection-nav-controls flex items-center justify-between sm:justify-end gap-3.5">
             {/* Progress indicator */}
-            <div className="flex items-center gap-3 font-semibold">
-              <span className="text-[14px] text-[#C58A28]">
+            <div className="flex items-center gap-2.5 font-semibold">
+              <span className="text-[13px] text-[#C58A28]">
                 0{activeIndex + 1}
               </span>
-              <div className="w-16 sm:w-24 h-[2px] bg-[rgba(23,40,61,0.14)] rounded-full overflow-hidden">
+              <div className="w-14 sm:w-20 h-[2px] bg-[rgba(23,40,61,0.14)] rounded-full overflow-hidden">
                 <div
                   className="h-full bg-[#C58A28] transition-all duration-500 ease-out"
                   style={{ width: `${progressPercentage}%` }}
                 />
               </div>
-              <span className="text-[14px] text-[#78818D]">
+              <span className="text-[13px] text-[#78818D]">
                 0{BIKES.length}
               </span>
             </div>
 
             {/* Prev / Next buttons */}
-            <div className="flex items-center gap-3">
+            <div className="flex items-center gap-2">
               <button
                 type="button"
                 onClick={handlePrev}
                 disabled={isTransitioning}
-                className="w-8 h-8 rounded-full bg-white/90 hover:bg-white border border-[rgba(23,40,61,0.16)] hover:border-[#E30100] text-[#17283D] hover:text-[#E30100] flex items-center justify-center transition-all cursor-pointer disabled:opacity-40 shadow-sm"
+                className="w-7 h-7 sm:w-8 sm:h-8 rounded-full bg-white/90 hover:bg-white border border-[rgba(23,40,61,0.16)] hover:border-[#E30100] text-[#17283D] hover:text-[#E30100] flex items-center justify-center transition-all cursor-pointer disabled:opacity-40 shadow-sm"
                 aria-label="Previous motorcycle"
               >
-                <ChevronLeft className="w-4 h-4" />
+                <ChevronLeft className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
               </button>
 
               <button
                 type="button"
                 onClick={handleNext}
                 disabled={isTransitioning}
-                className="w-8 h-8 rounded-full bg-white/90 hover:bg-white border border-[rgba(23,40,61,0.16)] hover:border-[#E30100] text-[#17283D] hover:text-[#E30100] flex items-center justify-center transition-all cursor-pointer disabled:opacity-40 shadow-sm"
+                className="w-7 h-7 sm:w-8 sm:h-8 rounded-full bg-white/90 hover:bg-white border border-[rgba(23,40,61,0.16)] hover:border-[#E30100] text-[#17283D] hover:text-[#E30100] flex items-center justify-center transition-all cursor-pointer disabled:opacity-40 shadow-sm"
                 aria-label="Next motorcycle"
               >
-                <ChevronRight className="w-4 h-4" />
+                <ChevronRight className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
               </button>
             </div>
           </div>
@@ -451,12 +451,12 @@ export default function ChooseYourRideSection() {
             =================================================================== */}
         <div
           ref={bikeDisplayRef}
-          className="collection-stage relative w-full flex flex-col items-center justify-center pt-0 pb-2"
+          className="collection-stage relative w-full flex flex-col items-center justify-center pt-0 pb-1"
         >
           {/* Top Label & Category */}
-          <div ref={descRef} className="w-full text-center mb-3">
+          <div ref={descRef} className="w-full text-center mb-1 sm:mb-1.5">
             <span
-              className="inline-block px-4 py-1 rounded-full bg-white/90 border text-[14px] tracking-[0.2em] uppercase font-semibold shadow-sm"
+              className="inline-block px-3 py-0.5 rounded-full bg-white/90 border text-[12px] sm:text-[13px] tracking-[0.18em] uppercase font-semibold shadow-sm"
               style={{
                 fontFamily: "'Rajdhani', sans-serif",
                 color: '#E30100',
@@ -470,10 +470,10 @@ export default function ChooseYourRideSection() {
           {/* Model Name Typography */}
           <div
             ref={titleRef}
-            className="w-full text-center mb-1 sm:mb-2"
+            className="w-full text-center mb-0.5 sm:mb-1"
           >
             <h3
-              className="text-4xl sm:text-5xl md:text-6xl lg:text-7xl uppercase leading-none m-0 heading-chiselled-hero"
+              className="text-3xl sm:text-4xl md:text-5xl lg:text-[3.25rem] uppercase leading-none m-0 heading-chiselled-hero"
               style={{
                 fontFamily: "'Bebas Neue', 'Anton', sans-serif",
                 letterSpacing: '0.04em',
@@ -490,7 +490,7 @@ export default function ChooseYourRideSection() {
             </h3>
             {activeBike.tagline && (
               <p
-                className="text-[14px] tracking-[0.22em] uppercase text-[#C58A28] mt-3 font-semibold"
+                className="text-[12px] sm:text-[13px] tracking-[0.2em] uppercase text-[#C58A28] mt-0.5 sm:mt-1 font-semibold"
                 style={{ fontFamily: "'Rajdhani', sans-serif" }}
               >
                 {activeBike.tagline}
@@ -499,7 +499,7 @@ export default function ChooseYourRideSection() {
           </div>
 
           {/* LARGE MOTORCYCLE IMAGE (Studio Presentation, No Box Card) */}
-          <div className="collection-bike-showcase relative w-full max-w-[840px] flex items-center justify-center my-1 sm:my-1.5">
+          <div className="collection-bike-showcase relative w-full max-w-[780px] flex items-center justify-center my-0.5 sm:my-1">
             {/* Ambient Radial Spotlight Behind Motorcycle */}
             <div
               className="absolute inset-0 m-auto w-4/5 h-4/5 rounded-full pointer-events-none"
@@ -516,7 +516,7 @@ export default function ChooseYourRideSection() {
                 ref={bikeImageRef}
                 src={activeBike.src}
                 alt={`Royal Enfield ${activeBike.name}`}
-                className="collection-bike-image w-full max-w-[740px] h-auto max-h-[220px] sm:max-h-[260px] md:max-h-[290px] object-contain select-none pointer-events-none"
+                className="collection-bike-image w-full max-w-[680px] h-auto object-contain select-none pointer-events-none"
                 draggable={false}
                 loading="lazy"
                 decoding="async"
@@ -526,10 +526,10 @@ export default function ChooseYourRideSection() {
             {/* Studio Floor Contact Shadow */}
             <div
               ref={bikeShadowRef}
-              className="absolute bottom-0 left-1/2 -translate-x-1/2 w-4/5 max-w-[680px] h-6 sm:h-8 rounded-full pointer-events-none"
+              className="absolute bottom-0 left-1/2 -translate-x-1/2 w-4/5 max-w-[620px] h-4 sm:h-6 rounded-full pointer-events-none"
               style={{
                 background: 'radial-gradient(ellipse at 50% 50%, rgba(23, 40, 61, 0.35) 0%, rgba(23, 40, 61, 0.15) 45%, transparent 75%)',
-                filter: 'blur(8px)',
+                filter: 'blur(6px)',
                 zIndex: 5
               }}
               aria-hidden="true"
@@ -539,7 +539,7 @@ export default function ChooseYourRideSection() {
           {/* Short Description */}
           {activeBike.description && (
             <p
-              className="text-[14px] text-[#536174] max-w-xl text-center font-normal leading-[1.6] px-4 my-3"
+              className="text-[12px] sm:text-[13px] text-[#536174] max-w-xl text-center font-normal leading-[1.5] px-4 my-1 sm:my-1.5"
               style={{ fontFamily: "'Inter', sans-serif" }}
             >
               {activeBike.description}
@@ -549,8 +549,8 @@ export default function ChooseYourRideSection() {
           {/* ===================================================================
               3–4 KEY SPECIFICATIONS GRID
               =================================================================== */}
-          <div className="w-full max-w-2xl my-2 sm:my-2.5 px-4" style={{ fontFamily: "'Rajdhani', sans-serif" }}>
-            <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 sm:gap-3.5">
+          <div className="w-full max-w-2xl my-1 sm:my-1.5 px-4" style={{ fontFamily: "'Rajdhani', sans-serif" }}>
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 sm:gap-2.5">
               {(activeBike.specs && activeBike.specs.length > 0
                 ? activeBike.specs
                 : [
@@ -565,12 +565,12 @@ export default function ChooseYourRideSection() {
                   ref={(el) => {
                     specItemsRef.current[sIdx] = el;
                   }}
-                  className="p-[15px] rounded-xl bg-[#FBF8F2] border border-[rgba(23,40,61,0.14)] hover:border-[#315F9C]/50 transition-colors text-center flex flex-col items-center justify-center shadow-[0_4px_16px_rgba(23,40,61,0.06)]"
+                  className="py-1.5 px-2.5 sm:py-2 sm:px-3 rounded-lg bg-[#FBF8F2] border border-[rgba(23,40,61,0.14)] hover:border-[#315F9C]/50 transition-colors text-center flex flex-col items-center justify-center shadow-[0_2px_10px_rgba(23,40,61,0.05)]"
                 >
-                  <span className="text-[14px] tracking-[0.18em] text-[#78818D] uppercase font-semibold block mb-3">
+                  <span className="text-[11px] sm:text-[12px] tracking-[0.16em] text-[#78818D] uppercase font-semibold block mb-0.5">
                     {spec.label}
                   </span>
-                  <span className="text-[14px] font-bold uppercase tracking-wider text-[#17283D]">
+                  <span className="text-[13px] sm:text-[14px] font-bold uppercase tracking-wider text-[#17283D]">
                     {spec.value}
                   </span>
                 </div>
@@ -581,7 +581,7 @@ export default function ChooseYourRideSection() {
           {/* ===================================================================
               MAIN BOOKING CTA BUTTON
               =================================================================== */}
-          <div ref={ctaButtonRef} className="mt-3 sm:mt-4 flex flex-col items-center gap-3" style={{ fontFamily: "'Rajdhani', sans-serif" }}>
+          <div ref={ctaButtonRef} className="mt-1.5 sm:mt-2.5 flex flex-col items-center gap-1 sm:gap-1.5" style={{ fontFamily: "'Rajdhani', sans-serif" }}>
             <button
               id="btn-book-test-ride"
               type="button"
@@ -590,13 +590,13 @@ export default function ChooseYourRideSection() {
                 background: 'linear-gradient(135deg, #C58A28 0%, #D89F3A 50%, #B67C1D 100%)',
                 color: '#FFFFFF',
               }}
-              className="px-8 sm:px-10 py-3 rounded-full font-bold text-[14px] uppercase tracking-[0.18em] shadow-[0_4px_25px_rgba(197,138,40,0.35)] hover:shadow-[0_8px_35px_rgba(197,138,40,0.55)] hover:scale-[1.03] active:scale-[0.98] transition-all duration-300 flex items-center gap-3 cursor-pointer group"
+              className="px-6 sm:px-8 py-2 sm:py-2.5 rounded-full font-bold text-[13px] sm:text-[14px] uppercase tracking-[0.18em] shadow-[0_4px_20px_rgba(197,138,40,0.35)] hover:shadow-[0_6px_28px_rgba(197,138,40,0.55)] hover:scale-[1.03] active:scale-[0.98] transition-all duration-300 flex items-center gap-2.5 cursor-pointer group"
             >
               <span>BOOK A TEST RIDE</span>
-              <ArrowRight className="w-4 h-4 transition-transform duration-300 group-hover:translate-x-1 text-white" />
+              <ArrowRight className="w-3.5 h-3.5 sm:w-4 sm:h-4 transition-transform duration-300 group-hover:translate-x-1 text-white" />
             </button>
 
-            <span className="text-[14px] tracking-wider text-[#78818D] uppercase font-semibold">
+            <span className="text-[11px] sm:text-[12px] tracking-wider text-[#78818D] uppercase font-semibold">
               COMPLIMENTARY RIDE AT AUTHORIZED SHOWROOMS
             </span>
           </div>
@@ -605,9 +605,9 @@ export default function ChooseYourRideSection() {
         {/* ===================================================================
             SECTION END LINE
             =================================================================== */}
-        <div className="mt-12 sm:mt-16 pt-8 pb-3 text-center border-t border-[rgba(23,40,61,0.1)] w-full">
+        <div className="mt-3 sm:mt-5 pt-2.5 sm:pt-3 pb-2 text-center border-t border-[rgba(23,40,61,0.1)] w-full">
           <p
-            className="text-[14px] tracking-[0.3em] uppercase text-[#C58A28] font-semibold m-0"
+            className="text-[12px] sm:text-[13px] tracking-[0.25em] uppercase text-[#C58A28] font-semibold m-0"
             style={{ fontFamily: "'Rajdhani', sans-serif" }}
           >
             FIND THE ONE THAT FEELS RIGHT.

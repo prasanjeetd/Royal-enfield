@@ -3,7 +3,6 @@ import Lenis from 'lenis';
 import gsap from 'gsap';
 import { ScrollTrigger } from 'gsap/ScrollTrigger';
 
-import CustomCursor from './components/CustomCursor';
 import Navigation from './components/Navigation';
 import EditorialHero from './components/EditorialHero';
 import ErrorBoundary from './components/ErrorBoundary';
@@ -104,9 +103,6 @@ export default function App() {
     <div className="app-container">
       {/* Full-Screen Premium Cinematic Loading Screen */}
       <CinematicLoader />
-
-      {/* Custom Precision Cursor */}
-      <CustomCursor />
 
       {/* Minimal Fixed Navigation (visible when scrolled) */}
       <Navigation />

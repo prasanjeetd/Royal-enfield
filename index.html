@@ -144,12 +144,42 @@
                 var b = document.getElementById('frame0-bar');
                 var t = document.getElementById('frame0-txt');
                 var p = 14;
+                window.__initialProgress = p;
+
+                // Track critical assets during Frame-0
+                var criticalLoaded = 0;
+                function onCriticalDone() {
+                  criticalLoaded++;
+                }
+                var imgLogo = new Image();
+                imgLogo.onload = onCriticalDone;
+                imgLogo.onerror = onCriticalDone;
+                imgLogo.src = '/logo.webp';
+                if (imgLogo.complete) onCriticalDone();
+
+                var imgBike = new Image();
+                imgBike.onload = onCriticalDone;
+                imgBike.onerror = onCriticalDone;
+                imgBike.src = '/bikes/classic-350.webp';
+                if (imgBike.complete) onCriticalDone();
+
+                var startTime = Date.now();
                 var iv = setInterval(function(){
-                  if (!b || !t || !document.getElementById('frame0-preloader')) { clearInterval(iv); return; }
-                  p = Math.min(84, p + Math.floor(Math.random() * 6 + 4));
+                  var el = document.getElementById('frame0-preloader');
+                  if (!b || !t || !el) {
+                    clearInterval(iv);
+                    return;
+                  }
+                  // Dynamic natural progress that coordinates with critical asset readiness
+                  // Never freezes at 84%; smoothly paces toward hand-off to React loader
+                  if (p < 92) {
+                    var inc = (criticalLoaded >= 2) ? 5 : (p < 70 ? 3 : 1);
+                    p = Math.min(92, p + Math.floor(Math.random() * inc + 2));
+                  }
+                  window.__initialProgress = p;
                   b.style.width = p + '%';
                   t.textContent = p + '%';
-                }, 90);
+                }, 80);
               })();
             </script>
           </div>

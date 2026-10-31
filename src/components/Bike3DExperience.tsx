@@ -5,9 +5,15 @@ import { DRACOLoader } from 'three/examples/jsm/loaders/DRACOLoader.js';
 import { MeshoptDecoder } from 'three/examples/jsm/libs/meshopt_decoder.module.js';
 import gsap from 'gsap';
 import { ScrollTrigger } from 'gsap/ScrollTrigger';
-import { Maximize2, Minimize2, RotateCcw, Plus, Minus, Compass, AlertCircle, RefreshCw, Eye, Info } from 'lucide-react';
+import { Maximize2, Minimize2, RotateCcw, Plus, Minus, Compass, AlertCircle, RefreshCw, Eye, Info, Focus } from 'lucide-react';
 
 gsap.registerPlugin(ScrollTrigger);
+
+export interface ComponentBounds {
+  min: { x: number; y: number; z: number };
+  max: { x: number; y: number; z: number };
+  targetOverride?: { x: number; y: number; z: number };
+}
 
 export interface BikeHotspot {
   id: string;
@@ -17,102 +23,168 @@ export interface BikeHotspot {
   subtitle: string;
   description: string;
   specs: { label: string; value: string }[];
+  meshFilter: RegExp;
+  bounds: ComponentBounds;
+  viewConfig: {
+    yaw: number;
+    pitch: number;
+    fovMargin: number;
+    camElevation?: number;
+    minDistance?: number;
+    maxDistance?: number;
+  };
   worldAnchor: { x: number; y: number; z: number };
   cameraTarget: { x: number; y: number; z: number };
   cameraPos: { x: number; y: number; z: number };
   modelRotation: { x: number; y: number };
 }
 
+/**
+ * Dynamic Camera-Focus Engine for Motorcycle Components
+ * Calculates world-space target, optimal framing distance based on component dimensions & FOV,
+ * and component-specific viewing angle without clipping or obstruction.
+ */
+function calculateComponentFocus(
+  spot: BikeHotspot,
+  camera: THREE.PerspectiveCamera,
+  viewportAspect: number
+): {
+  worldTarget: THREE.Vector3;
+  cameraPos: THREE.Vector3;
+  modelRotation: { x: number; y: number };
+} {
+  const { min, max, targetOverride } = spot.bounds;
+  const size = new THREE.Vector3(max.x - min.x, max.y - min.y, max.z - min.z);
+  const center = targetOverride 
+    ? new THREE.Vector3(targetOverride.x, targetOverride.y, targetOverride.z)
+    : new THREE.Vector3((min.x + max.x) / 2, (min.y + max.y) / 2, (min.z + max.z) / 2);
+
+  const vFovRad = (camera.fov * Math.PI) / 180;
+  const hFovRad = 2 * Math.atan(Math.tan(vFovRad / 2) * (viewportAspect || 1.7));
+  
+  const distV = (size.y / 2) / Math.tan(vFovRad / 2);
+  const distH = (size.x / 2) / Math.tan(hFovRad / 2);
+  let fitDist = Math.max(distV, distH, spot.viewConfig.minDistance || 0.6) * spot.viewConfig.fovMargin;
+  if (spot.viewConfig.maxDistance) {
+    fitDist = Math.min(fitDist, spot.viewConfig.maxDistance);
+  }
+
+  const rotEuler = new THREE.Euler(spot.viewConfig.pitch, spot.viewConfig.yaw, 0, 'XYZ');
+  const worldTarget = center.clone().applyEuler(rotEuler);
+
+  const camPos = new THREE.Vector3(
+    worldTarget.x,
+    worldTarget.y + (spot.viewConfig.camElevation || 0),
+    worldTarget.z + fitDist
+  );
+
+  return {
+    worldTarget,
+    cameraPos: camPos,
+    modelRotation: { x: spot.viewConfig.pitch, y: spot.viewConfig.yaw },
+  };
+}
+
 const BIKE_HOTSPOTS: BikeHotspot[] = [
   {
     id: 'engine',
     num: '01',
-    category: '01 / ENGINE',
-    title: 'J-SERIES 349 CC',
-    subtitle: 'AIR-OIL COOLED SOHC',
-    description: 'Single-cylinder with primary counter-balancer shaft. Engineered for visceral low-end cadence and vibration-isolated cruising.',
+    category: '01 / POWERTRAIN',
+    title: 'J-SERIES ENGINE',
+    subtitle: 'THE HEART OF THE MACHINE',
+    description: 'Single-cylinder powerplant engineered for smooth low-end torque, refined primary balancer cadence, and effortless cruising composure.',
     specs: [
       { label: 'DISPLACEMENT', value: '349 CC' },
-      { label: 'MAX POWER', value: '20.2 BHP' },
-      { label: 'PEAK TORQUE', value: '27 NM' },
-      { label: 'BALANCER', value: 'Primary Shaft' },
+      { label: 'MAX POWER', value: '20.2 BHP @ 6100 RPM' },
+      { label: 'PEAK TORQUE', value: '27 NM @ 4000 RPM' },
     ],
-    worldAnchor: { x: 0.12, y: 0.65, z: 0.05 },
-    cameraTarget: { x: 0.10, y: 0.62, z: 0.0 },
-    cameraPos: { x: 0.10, y: 0.68, z: 1.25 },
-    modelRotation: { x: 0.0, y: 0.0 },
+    meshFilter: /cylinder_black_barrel|cylinder_cooling_fin|cylinder_base|crankcase_cover|engine/i,
+    bounds: { min: { x: -0.20, y: 0.35, z: -0.17 }, max: { x: 0.245, y: 0.83, z: 0.17 } },
+    viewConfig: { yaw: 0.08, pitch: 0.0, fovMargin: 1.25, minDistance: 1.15, maxDistance: 1.30 },
+    worldAnchor: { x: 0.08, y: 0.60, z: 0.14 },
+    cameraTarget: { x: 0.05, y: 0.60, z: 0.04 },
+    cameraPos: { x: 0.05, y: 0.65, z: 1.25 },
+    modelRotation: { x: 0.0, y: 0.08 },
   },
   {
     id: 'exhaust',
     num: '02',
-    category: '02 / EXHAUST',
-    title: 'PEASHOOTER SILENCER',
-    subtitle: 'TUNED BASS CADENCE',
-    description: 'Hydroformed primary header runner and chrome peashooter silencer tuned for deep bass exhaust pulse with BS6 compliance.',
+    category: '02 / ACOUSTICS',
+    title: 'TUNED PEASHOOTER',
+    subtitle: 'THE VOICE OF THE MACHINE',
+    description: 'Hydroformed exhaust designed to deliver the unmistakable Royal Enfield character with deep, low-frequency pulse.',
     specs: [
-      { label: 'FINISH', value: 'Triple Chrome' },
-      { label: 'EMISSION', value: 'BS6 Phase-2' },
-      { label: 'TYPE', value: 'Peashooter' },
-      { label: 'CATALYTIC', value: 'Integrated' },
+      { label: 'EMISSION', value: 'BS6 PHASE-2' },
+      { label: 'FABRICATION', value: 'HYDROFORMED' },
+      { label: 'CATALYTIC', value: 'INTEGRATED' },
     ],
-    worldAnchor: { x: -0.35, y: 0.44, z: 0.18 },
-    cameraTarget: { x: -0.25, y: 0.44, z: 0.0 },
-    cameraPos: { x: -0.20, y: 0.52, z: 1.35 },
-    modelRotation: { x: 0.02, y: -0.38 },
+    meshFilter: /exhaust|silencer|peashooter|muffler|header|bend_pipe/i,
+    bounds: { min: { x: -1.126, y: 0.20, z: 0.089 }, max: { x: 0.35, y: 0.50, z: 0.300 }, targetOverride: { x: -0.38, y: 0.35, z: 0.22 } },
+    viewConfig: { yaw: 0.08, pitch: -0.02, fovMargin: 1.15, camElevation: 0.02, minDistance: 1.55, maxDistance: 1.70 },
+    worldAnchor: { x: -0.38, y: 0.35, z: 0.22 },
+    cameraTarget: { x: -0.36, y: 0.35, z: 0.22 },
+    cameraPos: { x: -0.36, y: 0.37, z: 1.80 },
+    modelRotation: { x: -0.02, y: 0.08 },
   },
   {
     id: 'headlight',
     num: '03',
-    category: '03 / HEADLIGHT',
-    title: 'CASQUETTE PILOT LAMP',
-    subtitle: 'TIGER-EYE NACELLE',
-    description: 'Signature cast aluminium nacelle integrating a powerful reflector and iconic twin LED tiger-eye pilot lights with 12V DC stator.',
+    category: '03 / ILLUMINATION',
+    title: 'SIGNATURE HEADLIGHT',
+    subtitle: 'SEE THE ROAD DIFFERENTLY',
+    description: 'Classic round headlamp combining iconic design with functional illumination and signature twin LED tiger-eye pilot lamps.',
     specs: [
-      { label: 'HOUSING', value: 'Cast Nacelle' },
-      { label: 'HALO LIGHTS', value: 'Twin LED Pilots' },
-      { label: 'CIRCUIT', value: '12V Constant DC' },
-      { label: 'BEAM', value: 'High/Low Halogen' },
+      { label: 'HOUSING', value: 'CAST NACELLE' },
+      { label: 'PILOT LAMPS', value: 'TWIN LED' },
+      { label: 'POWER', value: '12V CONSTANT' },
     ],
-    worldAnchor: { x: 0.58, y: 1.10, z: 0.0 },
-    cameraTarget: { x: 0.50, y: 1.05, z: 0.0 },
-    cameraPos: { x: 0.65, y: 1.15, z: 1.15 },
-    modelRotation: { x: 0.04, y: 0.65 },
+    meshFilter: /headlamp_convex_optical_glass|headlamp_chrome_bezel|headlamp_•_faceted_parabolic_reflector|headlamp_bulb_shield|headlamp_filament_bulb/i,
+    bounds: { min: { x: 0.57, y: 1.00, z: -0.19 }, max: { x: 0.764, y: 1.22, z: 0.19 }, targetOverride: { x: 0.757, y: 1.111, z: 0.0 } },
+    viewConfig: { yaw: -Math.PI / 2, pitch: 0.0, fovMargin: 1.40, minDistance: 0.70, maxDistance: 0.75 },
+    worldAnchor: { x: 0.757, y: 1.111, z: 0.0 },
+    cameraTarget: { x: 0.0, y: 1.111, z: 0.757 },
+    cameraPos: { x: 0.0, y: 1.111, z: 1.48 },
+    modelRotation: { x: 0.0, y: -Math.PI / 2 },
   },
   {
     id: 'tank',
     num: '04',
-    category: '04 / TANK',
-    title: 'TEARDROP RESERVOIR',
-    subtitle: 'HAND-CRAFTED PINSTRIPES',
-    description: 'Heavy-gauge stamped steel fuel tank finished in deep automotive gloss, hand-crafted with authentic Madras dual gold coachlines.',
+    category: '04 / RESERVOIR',
+    title: 'SCULPTED TANK',
+    subtitle: 'THE SILHOUETTE OF THE MACHINE',
+    description: 'A sculpted steel tank that defines the Classic 350’s unmistakable profile, hand-crafted with Madras dual gold coachlines.',
     specs: [
-      { label: 'CAPACITY', value: '13.0 Litres' },
-      { label: 'MATERIAL', value: 'Deep-Drawn Steel' },
-      { label: 'PINSTRIPES', value: 'Hand-Crafted Gold' },
-      { label: 'BADGING', value: 'Die-Cast Crest' },
+      { label: 'CAPACITY', value: '13.0 LITRES' },
+      { label: 'MATERIAL', value: 'STAMPED STEEL' },
+      { label: 'PINSTRIPES', value: 'HAND-CRAFTED' },
     ],
-    worldAnchor: { x: 0.08, y: 1.02, z: 0.0 },
-    cameraTarget: { x: 0.08, y: 0.98, z: 0.0 },
-    cameraPos: { x: 0.15, y: 1.35, z: 1.20 },
-    modelRotation: { x: -0.12, y: 0.22 },
+    meshFilter: /teardrop_fuel_tank|tank_black_coachline|classic_script_tank_emblem/i,
+    bounds: { min: { x: -0.293, y: 0.88, z: -0.195 }, max: { x: 0.429, y: 1.15, z: 0.195 } },
+    viewConfig: { yaw: 0.18, pitch: -0.04, fovMargin: 1.20, minDistance: 1.10, maxDistance: 1.25 },
+    worldAnchor: { x: 0.068, y: 1.02, z: 0.16 },
+    cameraTarget: { x: 0.07, y: 1.01, z: -0.04 },
+    cameraPos: { x: 0.07, y: 1.06, z: 1.18 },
+    modelRotation: { x: -0.04, y: 0.18 },
   },
   {
     id: 'seat',
     num: '05',
-    category: '05 / SEAT',
+    category: '05 / ERGONOMICS',
     title: 'SCULPTED SADDLE',
-    subtitle: 'SPRUNG TOURING ERGONOMICS',
-    description: 'Contoured dual-density foam single saddle supported on a sprung subframe for commanding upright posture and touring composure.',
+    subtitle: 'CRAFTED FOR THE RIDE',
+    description: 'A carefully shaped seat designed around long-distance comfort, classic sprung subframe character, and commanding upright posture.',
     specs: [
       { label: 'SEAT HEIGHT', value: '805 MM' },
-      { label: 'FOAM', value: 'Dual-Density' },
-      { label: 'SUBFRAME', value: 'Sprung Steel' },
-      { label: 'UPHOLSTERY', value: 'Weather-Shield' },
+      { label: 'SUBFRAME', value: 'SPRUNG STEEL' },
+      { label: 'UPHOLSTERY', value: 'WEATHER-SHIELD' },
     ],
-    worldAnchor: { x: -0.45, y: 0.86, z: 0.0 },
-    cameraTarget: { x: -0.42, y: 0.84, z: 0.0 },
-    cameraPos: { x: -0.45, y: 1.25, z: 1.20 },
-    modelRotation: { x: -0.08, y: -0.42 },
+    meshFilter: /rider_sculpted_saddle|rider_saddle_support|pillion_cushion/i,
+    bounds: { min: { x: -0.77, y: 0.83, z: -0.184 }, max: { x: -0.17, y: 0.97, z: 0.184 } },
+    viewConfig: { yaw: -0.24, pitch: -0.14, fovMargin: 1.25, camElevation: 0.22, minDistance: 1.00, maxDistance: 1.15 },
+    worldAnchor: { x: -0.45, y: 0.89, z: 0.0 },
+    cameraTarget: { x: -0.46, y: 0.87, z: -0.16 },
+    cameraPos: { x: -0.46, y: 1.12, z: 0.96 },
+    modelRotation: { x: -0.14, y: -0.24 },
   },
 ];
 
@@ -203,7 +275,9 @@ function shouldMeshCastShadow(name: string | undefined): boolean {
  * Bike3DExperience — Clean, Rebuilt Interactive 3D Experience
  */
 export default function Bike3DExperience() {
-  const [activeIdx, setActiveIdx] = useState<number | null>(0);
+  const [activeIdx, setActiveIdx] = useState<number | null>(null);
+  const activeIdxRef = useRef<number | null>(null);
+  activeIdxRef.current = activeIdx;
   const [isFocusMode, setIsFocusMode] = useState<boolean>(false);
   const [isLoading, setIsLoading] = useState<boolean>(true);
   const [loadProgress, setLoadProgress] = useState<number>(0);
@@ -464,6 +538,7 @@ export default function Bike3DExperience() {
     threeRef.current.camera = camera;
     threeRef.current.modelGroup = modelGroup;
     threeRef.current.keyLight = keyLight;
+    (window as any).__threeRef = threeRef.current;
 
     // 7. Load GLTF Model
     const primaryModelUrl = '/royal_enfield.glb';
@@ -732,10 +807,12 @@ export default function Bike3DExperience() {
           tempVec.add(state.modelGroup!.position);
           tempVec.project(state.camera!);
 
+          const isSelected = activeIdxRef.current === idx;
+          const isFocusedOnAnother = activeIdxRef.current !== null && !isSelected;
           const isBehind = tempVec.z > 1;
           const sx = ((tempVec.x + 1) * 0.5) * rect.width;
           const sy = ((-tempVec.y + 1) * 0.5) * rect.height;
-          const isVisible = !isBehind && sx >= 20 && sx <= rect.width - 20 && sy >= 20 && sy <= rect.height - 20;
+          const isVisible = !isFocusedOnAnother && !isBehind && sx >= 20 && sx <= rect.width - 20 && sy >= 20 && sy <= rect.height - 20;
 
           if (isVisible) {
             pinEl.style.display = 'block';
@@ -956,20 +1033,31 @@ export default function Bike3DExperience() {
   };
 
   /**
-   * Hotspot Component Selection & Camera Pivot
+   * Hotspot Component Selection & Dynamic Camera Focus
    */
   const selectHotspot = useCallback((index: number) => {
     setActiveIdx(index);
     const comp = BIKE_HOTSPOTS[index];
+    if (!comp) return;
+
     const state = threeRef.current;
     state.lastInteractTime = Date.now();
 
+    // Dynamically calculate camera target, distance and position based on current container aspect ratio
+    const container = canvasContainerRef.current;
+    const aspect = container ? (container.clientWidth / (container.clientHeight || 1)) : 1.7;
+    const focusData = state.camera 
+      ? calculateComponentFocus(comp, state.camera, aspect)
+      : { cameraPos: new THREE.Vector3(comp.cameraPos.x, comp.cameraPos.y, comp.cameraPos.z),
+          worldTarget: new THREE.Vector3(comp.cameraTarget.x, comp.cameraTarget.y, comp.cameraTarget.z),
+          modelRotation: comp.modelRotation };
+
     // Smooth camera transition to target & position
-    state.targetCamPos.set(comp.cameraPos.x, comp.cameraPos.y, comp.cameraPos.z);
-    state.targetLookAt.set(comp.cameraTarget.x, comp.cameraTarget.y, comp.cameraTarget.z);
+    state.targetCamPos.copy(focusData.cameraPos);
+    state.targetLookAt.copy(focusData.worldTarget);
     
     // Smooth model orientation to feature the component
-    state.rotationTarget = { x: comp.modelRotation.x, y: comp.modelRotation.y };
+    state.rotationTarget = { x: focusData.modelRotation.x, y: focusData.modelRotation.y };
     state.rotVelocity = { x: 0, y: 0 };
     state.wakeUpLoop();
 
@@ -997,7 +1085,15 @@ export default function Bike3DExperience() {
   }, []);
 
   /**
-   * Keyboard Shortcuts (Arrow Keys, +, -, 0, R, ESC)
+   * Dynamic Camera-Focus on the active component (or headlight if none selected)
+   */
+  const focusActiveComponent = useCallback(() => {
+    const targetIdx = activeIdxRef.current !== null ? activeIdxRef.current : 2;
+    selectHotspot(targetIdx);
+  }, [selectHotspot]);
+
+  /**
+   * Keyboard Shortcuts (Arrow Keys, +, -, 0, R, F, ESC)
    */
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
@@ -1024,6 +1120,8 @@ export default function Bike3DExperience() {
         handleZoom('out');
       } else if (e.key === '0' || e.key === 'r' || e.key === 'R') {
         resetCamera();
+      } else if (e.key === 'f' || e.key === 'F') {
+        focusActiveComponent();
       } else if (e.key === 'Escape' && isFocusMode) {
         setIsFocusMode(false);
       }
@@ -1031,7 +1129,7 @@ export default function Bike3DExperience() {
 
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [isFocusMode, resetCamera]);
+  }, [isFocusMode, resetCamera, focusActiveComponent]);
 
   /**
    * GSAP ScrollTrigger Entrance Animation
@@ -1249,20 +1347,21 @@ export default function Bike3DExperience() {
                 <span className="truncate">RESET</span>
               </button>
 
-              {/* Focus / Fullscreen Mode */}
+              {/* Dynamic Component Focus Button */}
               <button
                 id="btn-toggle-focus"
                 type="button"
-                onClick={() => setIsFocusMode(!isFocusMode)}
-                className="w-full flex items-center justify-center gap-1.5 sm:gap-2.5 py-1.5 sm:py-2 px-1 sm:px-3 rounded-full text-[#536174] hover:text-[#D71920] hover:bg-black/[0.04] text-[11px] sm:text-[13px] md:text-[14px] font-bold tracking-wider uppercase transition-all cursor-pointer select-none whitespace-nowrap overflow-hidden"
-                title="Toggle Fullscreen Focus Mode (ESC)"
+                onClick={focusActiveComponent}
+                className={`w-full flex items-center justify-center gap-1.5 sm:gap-2.5 py-1.5 sm:py-2 px-1 sm:px-3 rounded-full text-[11px] sm:text-[13px] md:text-[14px] font-bold tracking-wider uppercase transition-all cursor-pointer select-none whitespace-nowrap overflow-hidden ${
+                  activeIdx !== null
+                    ? 'bg-gradient-to-r from-[#D4A64A] via-[#E8BE65] to-[#C58A28] text-[#17283D] shadow-[0_2px_10px_rgba(197,138,40,0.45)] border border-[#FFF4BC]'
+                    : 'text-[#536174] hover:text-[#D71920] hover:bg-black/[0.04]'
+                }`}
+                title={`Focus on ${activeIdx !== null ? BIKE_HOTSPOTS[activeIdx].title : 'Active Component'} (F)`}
+                aria-label={`Focus on ${activeIdx !== null ? BIKE_HOTSPOTS[activeIdx].title : 'Active Component'}`}
               >
-                {isFocusMode ? (
-                  <Minimize2 className="w-3 h-3 sm:w-3.5 sm:h-3.5 shrink-0" />
-                ) : (
-                  <Maximize2 className="w-3 h-3 sm:w-3.5 sm:h-3.5 shrink-0" />
-                )}
-                <span className="truncate">{isFocusMode ? 'EXIT' : 'FOCUS'}</span>
+                <Focus className="w-3 h-3 sm:w-3.5 sm:h-3.5 shrink-0" />
+                <span className="truncate">FOCUS</span>
               </button>
             </div>
 

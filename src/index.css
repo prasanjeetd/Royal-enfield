@@ -239,51 +239,6 @@ img { max-width: 100%; display: block; }
   mix-blend-mode: multiply;
 }
 
-/* ===================================================================
-   CUSTOM CURSOR
-   =================================================================== */
-
-.custom-cursor {
-  position: fixed;
-  top: 0;
-  left: 0;
-  width: 20px;
-  height: 20px;
-  border: 1.5px solid rgba(124, 167, 230, 0.65);
-  border-radius: 50%;
-  pointer-events: none;
-  z-index: 9999;
-  mix-blend-mode: difference;
-  transition: width 0.35s var(--ease-out-expo),
-              height 0.35s var(--ease-out-expo),
-              border-color 0.3s ease;
-  transform: translate(-50%, -50%);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
-
-.custom-cursor.expanded {
-  width: 80px;
-  height: 80px;
-  border-color: rgba(124, 167, 230, 0.4);
-}
-
-.custom-cursor-label {
-  font-family: var(--font-mono);
-  font-size: 7px;
-  font-weight: 600;
-  letter-spacing: 0.2em;
-  text-transform: uppercase;
-  color: var(--color-lightblue);
-  opacity: 0;
-  transition: opacity 0.25s ease;
-  white-space: nowrap;
-}
-
-.custom-cursor.expanded .custom-cursor-label { opacity: 1; }
-
-@media (pointer: coarse) { .custom-cursor { display: none !important; } }
 
 /* ===================================================================
    FIXED NAVIGATION
@@ -1937,8 +1892,8 @@ img { max-width: 100%; display: block; }
   overflow: hidden;
   user-select: none;
   z-index: 10;
-  padding-top: clamp(28px, 4vh, 48px);
-  padding-bottom: clamp(32px, 4.5vh, 56px);
+  padding-top: clamp(10px, 1.6vh, 22px);
+  padding-bottom: clamp(12px, 1.8vh, 24px);
   min-height: calc(100svh - var(--navbar-height, 72px));
   scroll-margin-top: var(--navbar-height, 72px);
 }
@@ -1946,7 +1901,8 @@ img { max-width: 100%; display: block; }
 @media (max-width: 768px) {
   .collection-section {
     padding-top: 24px;
-    padding-bottom: 40px;
+    padding-bottom: 36px;
+    min-height: auto;
     scroll-margin-top: var(--navbar-height, 64px);
   }
 }
@@ -1983,15 +1939,21 @@ img { max-width: 100%; display: block; }
 /* Header Two-Column Grid */
 .collection-header {
   width: 100%;
-  margin-bottom: 32px;
+  margin-bottom: clamp(8px, 1.4vh, 18px);
   box-sizing: border-box;
+}
+
+@media (max-width: 768px) {
+  .collection-header {
+    margin-bottom: 20px;
+  }
 }
 
 .collection-header-grid {
   display: flex;
   flex-direction: column;
   align-items: flex-start;
-  gap: 16px;
+  gap: 12px;
 }
 
 @media (min-width: 768px) {
@@ -1999,7 +1961,7 @@ img { max-width: 100%; display: block; }
     flex-direction: row;
     align-items: flex-end;
     justify-content: space-between;
-    gap: 32px;
+    gap: 24px;
   }
 }
 
@@ -2028,9 +1990,9 @@ img { max-width: 100%; display: block; }
   width: 100%;
   display: flex;
   flex-direction: column;
-  gap: 16px;
-  padding-bottom: 18px;
-  margin-bottom: 32px;
+  gap: 10px;
+  padding-bottom: clamp(6px, 0.9vh, 12px);
+  margin-bottom: clamp(8px, 1.2vh, 16px);
   border-bottom: 1px solid rgba(23, 40, 61, 0.12);
   box-sizing: border-box;
 }
@@ -2040,18 +2002,25 @@ img { max-width: 100%; display: block; }
     flex-direction: row;
     align-items: center;
     justify-content: space-between;
-    gap: 24px;
+    gap: 20px;
+  }
+}
+
+@media (max-width: 768px) {
+  .collection-nav-row {
+    padding-bottom: 14px;
+    margin-bottom: 20px;
   }
 }
 
 .collection-nav-tabs {
   display: flex;
   align-items: center;
-  gap: 12px;
+  gap: 10px;
   overflow-x: auto;
   scrollbar-width: none;
   -ms-overflow-style: none;
-  padding: 4px 0;
+  padding: 2px 0;
   max-width: 100%;
 }
 
@@ -2063,7 +2032,7 @@ img { max-width: 100%; display: block; }
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 20px;
+  gap: 16px;
   flex-shrink: 0;
 }
 
@@ -2087,48 +2056,41 @@ img { max-width: 100%; display: block; }
 .collection-bike-showcase {
   position: relative;
   width: 100%;
-  max-width: 900px;
-  margin: 12px auto 20px auto;
+  max-width: 800px;
+  margin: clamp(4px, 0.7vh, 8px) auto clamp(6px, 1vh, 12px) auto;
   display: flex;
   align-items: center;
   justify-content: center;
-  min-height: 260px;
+  min-height: 0;
   box-sizing: border-box;
 }
 
-@media (min-width: 640px) {
+@media (max-width: 768px) {
   .collection-bike-showcase {
-    min-height: 340px;
-    margin: 16px auto 24px auto;
-  }
-}
-
-@media (min-width: 1024px) {
-  .collection-bike-showcase {
-    min-height: 400px;
-    max-width: 1000px;
-    margin: 20px auto 28px auto;
+    margin: 10px auto 16px auto;
   }
 }
 
 .collection-bike-image {
   width: 100%;
-  max-height: 260px;
+  max-width: 680px;
+  height: auto;
+  max-height: clamp(165px, 24vh, 260px);
   object-fit: contain;
   user-select: none;
   pointer-events: none;
-  filter: drop-shadow(0 18px 32px rgba(23, 40, 61, 0.22));
+  filter: drop-shadow(0 14px 28px rgba(23, 40, 61, 0.22));
 }
 
-@media (min-width: 640px) {
+@media (max-width: 768px) {
   .collection-bike-image {
-    max-height: 350px;
+    max-height: 240px;
   }
 }
 
-@media (min-width: 1024px) {
+@media (max-width: 480px) {
   .collection-bike-image {
-    max-height: 420px;
+    max-height: 200px;
   }
 }
 
@@ -2558,66 +2520,8 @@ img { max-width: 100%; display: block; }
 }
 
 /* ===================================================================
-   COLLECTION SECTION & BOOKING MODAL RESPONSIVE CONTAINER SYSTEM
+   BOOKING MODAL RESPONSIVE CARD & LAYOUT SYSTEM
    =================================================================== */
-
-.collection-section {
-  width: 100%;
-  padding-block: clamp(56px, 7vw, 104px);
-  position: relative;
-  overflow: hidden;
-  box-sizing: border-box;
-}
-
-.collection-container {
-  width: 100%;
-  max-width: 1440px;
-  margin-inline: auto;
-  padding-inline: clamp(20px, 4vw, 64px);
-  box-sizing: border-box;
-  display: flex;
-  flex-direction: column;
-}
-
-.collection-header-grid {
-  display: flex;
-  flex-direction: column;
-  align-items: flex-start;
-  gap: 16px;
-}
-
-@media (min-width: 768px) {
-  .collection-header-grid {
-    flex-direction: row;
-    align-items: flex-end;
-    justify-content: space-between;
-    gap: 32px;
-  }
-}
-
-.collection-bike-showcase {
-  width: 100%;
-  max-width: 880px;
-  margin-inline: auto;
-  position: relative;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
-
-.collection-bike-image {
-  width: 100%;
-  max-width: 780px;
-  height: auto;
-  max-height: 420px;
-  object-fit: contain;
-}
-
-@media (max-width: 640px) {
-  .collection-bike-image {
-    max-height: 280px;
-  }
-}
 
 /* Booking Modal Responsive Card & Layout System */
 .booking-modal-card {
